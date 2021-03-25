@@ -1,10 +1,23 @@
 #!/usr/bin/python3
 
 # TODO
-# input argument for credentials.json
-# input / output dirs
+# create input directory 'input':
+#   - credentials.json
+#   - websites.json
+#   - FAQ.md
+#
+# create output directory 'status'
+#   - status.json
+#   - archive/status.json[X]
+#
+# re-read website.json every loop
+#
 # look for other sites
+#
+# make it look good on a phone and computer
+#
 # more testing. script?
+#
 
 import traceback
 import requests
