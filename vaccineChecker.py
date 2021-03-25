@@ -10,6 +10,8 @@
 #   - status.json
 #   - archive/status.json[X]
 #
+# switch credentials
+#
 # re-read website.json every loop
 #
 # look for other sites
