@@ -321,7 +321,7 @@ if __name__ == "__main__":
             help="How often, in seconds, the status will be requested from the sites in websites.json",
             required=False,
             metavar='[X]',
-            default=5*60)
+            default=4*60)
 
     args = parser.parse_args()
 
