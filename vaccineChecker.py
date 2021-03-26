@@ -12,6 +12,8 @@
 #
 # switch credentials
 #
+# priority text
+#
 # re-read website.json every loop
 #
 # look for other sites
@@ -249,32 +251,38 @@ class vaccineChecker(object):
                         DEBUG(traceback.format_exc())
                         self.send_message("Other Error of type %s : %s ... exiting." % (type(e).__name__, str(e)))
                         sys.exit(-1)
+    
+            try:
+                # populate the file we use for communication with PHP
+                if (not os.path.exists(self.m_outputDir)):
+                    os.makedirs(self.m_outputDir)
+                STATUS_JSON_FILENAME = self.m_outputDir + "/status.json" 
+                content = json.dumps(self.m_websites, indent=4)
+                f = open(STATUS_JSON_FILENAME, "w")
+                f.write(content)
+                f.close()
 
-            # populate the file we use for communication with PHP
-            if (not os.path.exists(self.m_outputDir)):
-                os.makedirs(self.m_outputDir)
-            STATUS_JSON_FILENAME = self.m_outputDir + "/status.json" 
-            content = json.dumps(self.m_websites, indent=4)
-            f = open(STATUS_JSON_FILENAME, "w")
-            f.write(content)
-            f.close()
+                # save off all that we make
+                ARCHIVE_DIR = self.m_outputDir + "/archive"
+                if (not os.path.exists(ARCHIVE_DIR)):
+                    os.makedirs(ARCHIVE_DIR)
+                filename = ARCHIVE_DIR + "/" + STATUS_JSON_FILENAME + "." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
+                f = open(filename, "w")
+                f.write(content)
+                f.close()
+                DEBUG("Wrote %s" % (filename))
+                        
+                sleeptime = random.randint(self.QUERY_TIME-15, self.QUERY_TIME+15)
+                DEBUG("checking again in %d seconds..." % (sleeptime))
+                time.sleep(sleeptime)
 
-            # save off all that we make
-            ARCHIVE_DIR = self.m_outputDir + "/archive"
-            if (not os.path.exists(ARCHIVE_DIR)):
-                os.makedirs(ARCHIVE_DIR)
-            filename = ARCHIVE_DIR + "/" + STATUS_JSON_FILENAME + "." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
-            f = open(filename, "w")
-            f.write(content)
-            f.close()
-            DEBUG("Wrote %s" % (filename))
-                    
-            sleeptime = random.randint(self.QUERY_TIME-15, self.QUERY_TIME+15)
-            DEBUG("checking again in %d seconds..." % (sleeptime))
-            time.sleep(sleeptime)
+                schedule.run_pending()
+                self.m_attempts += 1
 
-            schedule.run_pending()
-            self.m_attempts += 1
+            except Exception as e:
+                DEBUG(traceback.format_exc())
+                self.send_message("Error during processing of type %s : %s ... exiting." % (type(e).__name__, str(e)))
+                sys.exit(-1)
 
 if __name__ == "__main__":
 
