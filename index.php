@@ -159,7 +159,7 @@ if ($DEBUG_RAW)
 <div style="padding: 0 2em 1em 2em">
 <b>What is this page?</b>
 <br>
-This page provides the current status of vaccine availability in San Antonio, TX.
+This page provides the current status of vaccine availability from major distribution sites in San Antonio, TX.
 <br>
 <br>
 <b>How does it work?</b>
@@ -167,14 +167,19 @@ This page provides the current status of vaccine availability in San Antonio, TX
 Provider sites are periodically queried to look for presence or absences of phrases like "currently no vaccine" or "Available Now".
 <br>
 <br>
-<b>Doesn't this spam the provider servers?</b>
+<b>Why isn't [X] site shown?</b>
 <br>
-This site limits the number of requests to every <?php print_n($REFRESH_RATE); ?> minutes, regardless of how many people visit or refresh this page.  This site is a funnel of information, not a spambot.
+I may not know about it.  Email me at <a href="mailto:amasmiller.com">amasmiller@gmail.com</a>.
 <br>
 <br>
 <b>Is this available in other cities?</b>
 <br>
 Don't know.  This was homegrown for San Antonio, like an HEB tortilla.  The source code is available at <a href="https://github.com/amasmiller/savaccine/">this site</a>.
+<br>
+<br>
+<b>Doesn't this spam the provider servers?</b>
+<br>
+This site limits the number of requests to every <?php print_n($REFRESH_RATE); ?> minutes, regardless of how many people visit or refresh this page.  This site is a funnel of information, not a spambot.
 <br>
 <br>
 <b>Who made this?</b>
