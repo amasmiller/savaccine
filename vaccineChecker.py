@@ -235,7 +235,7 @@ class vaccineChecker(object):
                 try:
                     DEBUG("asking %s at %s ..." % (self.m_websites[i]['name'], self.m_websites[i]['website']))
                     r = requests.get(self.m_websites[i]['website'], timeout=self.TIMEOUT, verify=False)
-                    html = re.sub("(<!--.*?-->)", "", r.text, flags=re.DOTALL) # remove HTML comments
+                    html = re.sub("(<!--.*?-->)", "", r.text, flags=re.DOTALL) # remove HTML comments, outdated information sometimes lives here
 
                     if self.m_websites[i]['pos_phrase'] != "" and self.m_websites[i]['pos_phrase'] in html:
                         self.handle_status("probably", i)
