@@ -2,13 +2,11 @@
 
 # TODO
 # 
-# put FAQ.md in input directory
+# cleanup documentation and TODOs
 #
-# re read website.json?
-#
-# switch credentials
-#
-# look for other sites
+# possibly add other sites
+# - https://www.walgreens.com/findcare/vaccination/covid-19/location-screening#!
+# - https://www.cvs.com/immunizations/covid-19-vaccine
 #
 # test on different size devices
 #
