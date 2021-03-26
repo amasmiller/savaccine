@@ -164,7 +164,7 @@ This page provides the current status of vaccine availability in San Antonio, TX
 <br>
 <b>How does it work?</b>
 <br>
-Provider sites are periodically queried to look for presence or absences of phrases like "currently no vaccine".
+Provider sites are periodically queried to look for presence or absences of phrases like "currently no vaccine" or "Available Now".
 <br>
 <br>
 <b>Doesn't this spam the provider servers?</b>
