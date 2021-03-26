@@ -12,44 +12,76 @@ This file must be in the same directory as 'status.json'.
 
 <html>
 <style>
-#button {
+
+#button 
+{
     font-family: 'Verdana';
-    font-size: 1.2em;
-    border: 0.16em solid; 
+    border: 0.2em solid; 
     border-radius: 2em; 
-    padding: 0.4em 0 0.4em 0;
-    margin: 0.6em 0.1em 0.2em 0.2em;
-    width: 60%;
+    padding: 20px 20px 20px 20px;
+    margin: 18px 1px 18px 1px;
 }
+
 body 
 { 
     margin: 1em;
     font-family: 'Verdana';
-    font-size: 1.3em;
 }
+
+@media only screen and (orientation: portrait)
+{
+    #button 
+    {
+        font-size: 40px;
+        width: 95%;
+    }
+
+    body 
+    { 
+        font-size: 30px;
+    }
+}
+
+@media only screen and (orientation: landscape)
+{
+    #button 
+    {
+        font-size: 20px;
+        width: 45%;
+    }
+
+    body 
+    { 
+        font-size: 20px;
+    }
+
+}
+
 </style>
 <?php
 use \Datetime;
 
-// if needed, comment in
-// error_reporting(-1);
-// ini_set('display_errors', 'On');
-
-// for developers
-if (isset($_GET["debug"]))
-{
-    $DEBUG = True; 
-}
-
 // utility function so HTML looks nice
 function print_n($s) { echo $s."\n"; }
 
+// if needed, comment in
+//error_reporting(-1);
+//ini_set('display_errors', 'On');
+
+// for developers
+if (isset($_GET["debug_raw"])) { $DEBUG_RAW = True; }
+else { $DEBUG_RAW = False; }
+if (isset($_GET["debug_fast"])) { $DEBUG_FAST = True; }
+else { $DEBUG_FAST = False; }
+if (isset($_GET["debug_test"])) { $DEBUG_TEST = True; }
+else { $DEBUG_TEST = False; }
+
 // what's my name again?
-$SITE_TITLE = "San Antonio COVID-19 Vaccine Availability Website";
+$SITE_TITLE = "San Antonio COVID-19 Vaccine Availability";
 print_n("<title>$SITE_TITLE</title>");
 
 $REFRESH_RATE = 5; // minutes
-print_n("<meta http-equiv=\"refresh\" content=\"".strval($REFRESH_RATE*60)."\">");
+print_n("<meta http-equiv=\"refresh\" content=\"".(($DEBUG_FAST) ? "1" : strval($REFRESH_RATE*60))."\">");
 
 // read the output of vaccine-checker.py
 $STATUS_JSON = "status.json";
@@ -60,14 +92,14 @@ $items = json_decode(file_get_contents($STATUS_JSON, true));
 print_n("<body>");
 print_n("<center>");
 
-print_n("<b>$SITE_TITLE</b>".($DEBUG ? " (Debug)" : ""));
+print_n("<b>$SITE_TITLE</b>");
 print_n("<br><br>");
 print_n("Clicking the button opens the site.");
 print_n("<br><br>");
 $allurls = "";
 foreach ($items as $item)
 {
-    if ($item->name == "Test Site" && !$DEBUG) { continue; }
+    if ($item->name == "Test Site" && !$DEBUG_TEST) { continue; }
 
     $text = "<b>$item->name</b><br>slots " . $item->status . " available<br>as of " . $item->update_time;
 
@@ -106,11 +138,11 @@ $now = new DateTime("now", new DateTimeZone('America/Chicago'));
 print_n("Last page refresh: ".$now->format('d-M-Y h:i:s A'));  
 print_n("<br><br>");
 
-print_n("This page refreshes every $REFRESH_RATE minutes."); 
+print_n("This page refreshes every ".($DEBUG_FAST ? "second." : "$REFRESH_RATE minutes.")); 
 
 print_n("</center>");
 
-if ($DEBUG)
+if ($DEBUG_RAW)
 {
     print_n("<pre style=\"text-align:left;\">");
     print_n(file_get_contents($STATUS_JSON, true));

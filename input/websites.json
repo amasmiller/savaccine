@@ -1,0 +1,26 @@
+[
+    {
+        "name": "UT Health San Antonio",
+        "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
+        "neg_phrase": "are full",
+        "pos_phrase": "you confirm your understanding"
+    },
+    {
+        "name": "University Health",
+        "website": "https://www.universityhealthsystem.com/coronavirus-covid19/vaccine/vaccine-appointments",
+        "neg_phrase": "currently no vaccine",
+        "pos_phrase": "A small number of"
+    },
+    {
+        "name": "San Antonio Metro Health",
+        "website": "https://covid19.sanantonio.gov/Services/Vaccination-for-COVID-19?lang_update=63752022779168615",
+        "neg_phrase": "Please check back",
+        "pos_phrase": ""
+    },
+    {
+        "name": "Test Site",
+        "website": "https://amasmiller.com/savaccine/test.php",
+        "neg_phrase": "this is a bad phrase",
+        "pos_phrase": "this is a good phrase"
+    }
+]

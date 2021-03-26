@@ -1,26 +1,17 @@
 #!/usr/bin/python3
 
 # TODO
-# create input directory 'input':
-#   - credentials.json
-#   - websites.json
-#   - FAQ.md
+# 
+# put FAQ.md in input directory
 #
-# create output directory 'status'
-#   - status.json
-#   - archive/status.json[X]
+# re read website.json?
 #
 # switch credentials
 #
-# priority text
-#
-# re-read website.json every loop
-#
 # look for other sites
 #
-# make it look good on a phone and computer
+# test on different size devices
 #
-# more testing. script?
 #
 
 import traceback
@@ -98,62 +89,42 @@ class vaccineChecker(object):
     SMTP_PORT = 0
     ##############################################
 
+    MIN_REQUEST_RATE = 5 # seconds
     MAX_ATTEMPTS = 10000 # maximum runs of main while loop
     TIMEOUT = 10 # website access timeout (seconds)
-    QUERY_TIME = 16 # how often to ask (minimum 15)
 
     m_attempts = 0
-    m_outputDir = "" # where status.json and it's archive friends end up
+    m_inputDir = "" # location of credentials.json, websites.json, FAQ.md
+    m_outputDir = "" # the directory were status.json gets written to
+    m_requestRate = 0 # how often, in seconds, we should ask for website status
 
-    # name, website, phrases to look for, etc..
-    m_websites = [
-        {
-            "name": "UT Health San Antonio",
-            "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
-            "neg_phrase": "are full",
-            "pos_phrase": "you confirm your understanding",
-            "status": "probably not",
-            "update_time": "",
-        },
-        {
-            "name": "University Health",
-            "website": "https://www.universityhealthsystem.com/coronavirus-covid19/vaccine/vaccine-appointments",
-            "neg_phrase": "currently no vaccine",
-            "pos_phrase": "A small number of",
-            "status": "probably not",
-            "update_time": "",
-        },
-        {
-            "name": "San Antonio Metro Health",
-            "website": "https://covid19.sanantonio.gov/Services/Vaccination-for-COVID-19?lang_update=63752022779168615",
-            "neg_phrase": "Please check back",
-            "pos_phrase": "",
-            "status": "probably not",
-            "update_time": "",
-        },
-        # for debugging
-        {
-            "name": "Test Site",
-            "website": "https://amasmiller.com/savaccine/test.php",
-            "neg_phrase": "this is a bad phrase",
-            "pos_phrase": "this is a good phrase",
-            "status": "probably not",
-            "update_time": "",
-        },
-    ]
+    # see input/websites.json
+    m_websites = []
 
     '''
     Setup.
     '''
-    def __init__(self, outputDir):
+    def __init__(self, inputDir, outputDir, requestRate):
 
+        self.m_inputDir = inputDir
         self.m_outputDir = outputDir
+        self.m_requestRate = requestRate
 
         # for confirmation things are going ok, send a text/email
         schedule.every(30).minutes.do(self.heartbeat)
 
-        # load credentials
-        filename = "credentials.json"
+        self.read_credentials()
+        self.read_websites()
+
+        self.send_message("INFO: Starting Up!")
+
+   
+    '''
+    Read in credentials.json.
+    '''
+    def read_credentials(self):
+
+        filename = self.m_inputDir + "/credentials.json"
         example = ''' 
 {
 "email" : "foo@gmail.com",
@@ -169,7 +140,7 @@ class vaccineChecker(object):
 
         try:
             f = open(filename)
-            c = json.load(f)
+            c = json.loads(f.read())
             f.close()
             self.EMAIL = c['email']
             self.PASSWORD = c['password']
@@ -182,7 +153,39 @@ class vaccineChecker(object):
             DEBUG(traceback.format_exc())
             sys.exit(-1)
 
-        self.send_message("INFO: Starting Up!")
+    '''
+    Read in websites.json.
+    '''
+    def read_websites(self):
+        filename = self.m_inputDir + "/websites.json"
+        example = ''' 
+{
+    "name": "UT Health San Antonio",
+    "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
+    "neg_phrase": "are full",
+    "pos_phrase": "you confirm your understanding",
+}
+        '''
+        if (not os.path.exists(filename)):
+            DEBUG("ERROR: " + filename + ' file not found, exiting. example file contents: ' + example)
+            sys.exit(-1)
+
+        try:
+            f = open(filename)
+            self.m_websites = json.loads(f.read())
+
+            # initialize things the user doesn't supply
+            for site in self.m_websites:
+                if "status" not in site:
+                    site["status"] =  "probably not"
+                if "update_time" not in site:
+                    site["update_time"] = ""
+
+            f.close()
+        except Exception as e:
+            DEBUG("ERROR: Problem reading file " + filename + '. valid example content: ' + example)
+            DEBUG(traceback.format_exc())
+            sys.exit(-1)
 
     '''
     Given a string, logs it and sends an email to RECIPIENT ,
@@ -191,6 +194,7 @@ class vaccineChecker(object):
     def send_message(self, msg):
         DEBUG(msg)
 
+        msg = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), msg)
         msg = MIMEText(msg)
         msg['Subject'] = 'Vaccine Checker Script'
         msg['From'] = self.EMAIL
@@ -208,7 +212,7 @@ class vaccineChecker(object):
     Utility function to let someone know the script is running a-ok.
     '''
     def heartbeat(self):
-        self.send_message("INFO: I'm alive! (%d)" % (attempts))
+        self.send_message("INFO: I'm alive! (%d)" % (self.m_attempts))
 
     '''
     Handle when a website status changes (i.e. from "probably not" to "maybe")
@@ -256,9 +260,9 @@ class vaccineChecker(object):
                 # populate the file we use for communication with PHP
                 if (not os.path.exists(self.m_outputDir)):
                     os.makedirs(self.m_outputDir)
-                STATUS_JSON_FILENAME = self.m_outputDir + "/status.json" 
+                STATUS_JSON_FILENAME = "status.json" 
                 content = json.dumps(self.m_websites, indent=4)
-                f = open(STATUS_JSON_FILENAME, "w")
+                f = open(self.m_outputDir + "/" + STATUS_JSON_FILENAME, "w")
                 f.write(content)
                 f.close()
 
@@ -271,8 +275,10 @@ class vaccineChecker(object):
                 f.write(content)
                 f.close()
                 DEBUG("Wrote %s" % (filename))
-                        
-                sleeptime = random.randint(self.QUERY_TIME-15, self.QUERY_TIME+15)
+                
+                # give the good server some time to rest
+                VARIANCE = 10 # seconds
+                sleeptime = random.randint(max(self.MIN_REQUEST_RATE, self.m_requestRate - VARIANCE), max(self.MIN_REQUEST_RATE, self.m_requestRate + VARIANCE))
                 DEBUG("checking again in %d seconds..." % (sleeptime))
                 time.sleep(sleeptime)
 
@@ -291,6 +297,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=PROGRAM_DESCRIPTION, formatter_class=RawTextHelpFormatter)
 
     parser.add_argument(
+            '--input-dir',
+            action="store",
+            dest="inputDir",
+            help="The directory where 'credentials.json' and 'websites.json' will be read from",
+            required=False,
+            metavar='[X]',
+            default="input")
+
+    parser.add_argument(
             '--output-dir',
             action="store",
             dest="outputDir",
@@ -299,7 +314,22 @@ if __name__ == "__main__":
             metavar='[X]',
             default=".")
 
+    parser.add_argument(
+            '--request-rate',
+            action="store",
+            dest="requestRate",
+            help="How often, in seconds, the status will be requested from the sites in websites.json",
+            required=False,
+            metavar='[X]',
+            default=5*60)
+
     args = parser.parse_args()
 
-    vc = vaccineChecker(args.outputDir)
+    try:
+        args.requestRate = int(args.requestRate)
+    except Exception as e:
+        DEBUG("ERROR: --request-rate must be a number")
+        sys.exit(-1)
+
+    vc = vaccineChecker(args.inputDir, args.outputDir, args.requestRate)
     vc.run()
