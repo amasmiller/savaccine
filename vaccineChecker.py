@@ -2,8 +2,6 @@
 
 # TODO
 # 
-# create test site area
-#
 # cleanup documentation and TODOs
 #
 # possibly add other sites
@@ -37,7 +35,7 @@ PROGRAM_DESCRIPTION="""
     
     OVERVIEW:
 
-    This program is a daemon for inspectinv vaccine provider websites, 
+    This program is a daemon for inspecting vaccine provider websites, 
     looking for confirmation of lack of phrases indicating availability.
     The result is written to a 'status.json' file in the directory 
     specified by --output-dir.
@@ -57,14 +55,14 @@ PROGRAM_DESCRIPTION="""
     This program also expects a valid 'websites.json' file in the directory
     specified by --input dir.  This file defines the websites to query, along with 
     the positive/negative phrases to search for.  Example 'websites.json' file:
-    [
-        {
-            "name": "UT Health San Antonio",
-            "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
-            "neg_phrase": "are full",
-            "pos_phrase": "you confirm your understanding"
-        }
-    ]
+        [
+            {
+                "name": "UT Health San Antonio",
+                "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
+                "neg_phrase": "are full",
+                "pos_phrase": "you confirm your understanding"
+            }
+        ]
 
 
     EXAMPLE USE (Command Line):

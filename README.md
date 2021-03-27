@@ -2,28 +2,27 @@
 
 ## What is this page?
 
-This project is used at https://amasmiller.com/savaccine/ to show availablity of the COVID-19 vaccine in San Antonio, TX.
+This project is used bby https://amasmiller.com/savaccine/ to show availablity of the COVID-19 vaccine in San Antonio, TX.
 
 ## How does it work?
 
-Provider's sites are periodically queried to look for presence or absences of phrases like "currently no vaccine".
+Vaccine provider websites are periodically queried to look for presence or absence of phrases like "currently no vaccine".
 
-`index.php` is the website, `vaccineChecker.py` is the background task for finding status.
+`index.php` is the website, `vaccineChecker.py` is the background task for finding status.  See respective README information at the top of each file.
 
 ## What if I want to use it for my city?
 
-Go for it.  It's under the MIT license.  The setup is not a one-click-easy-button, but it's not too complicated.
-
-There are only two files from here you need: `index.php` and `vaccineChecker.py`.
+The setup is not a one-click-easy-button, but it's not too complicated:
 
 You'll need to:
-* have a Linux server
-* setup a server to serve PHP (v5.5 minimum)
-* have Python (v3.4.3 minimum)
-* have the Python dependencies in the `import`s of `vaccineChecker.py` (a.k.a. `pip install....`)
-* place `index.php` in a folder served by the web server
-* configure `vaccineChecker.py` to:
-  * read your own `credentials.json`
-  * obtain status from your own website list
-  * to run as a background task
-  * output `status.json` to wherever `index.php` lives
+* have a Linux server with:
+    * PHP (v5.5 known to work) 
+    * Python (v3.4.3 known to work)
+    * Python dependencies in the `import`s of `vaccineChecker.py` (a.k.a. `pip install....`)
+* download and extract a copy of this repository to a location NOT served by the web server
+* in the extracted directory:
+  * create your own `input/credentials.json` (see top of `vaccineChecker.py`)
+  * modify `input/websites.json` for the websites you wish to monitor
+  * run the `vaccineChecker.py` as a background task
+* create a new directory to be served by the webserver.  within this directory, create softlinks to `index.php` and `status.json`.
+* view `index.php` on the web!  debug, test, repeat!

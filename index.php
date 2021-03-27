@@ -1,12 +1,37 @@
 <!--
 
-index.php
+OVERVIEW:
 
-Webpage that reads the `status.json` produced by `vaccine-checker.py`.
+    This is the webpage that reads the `status.json` produced by 
+    `vaccine-checker.py`.
 
-This is the page the user will see.
+    This file must be in the same directory as 'status.json' (or a symlink to it).
 
-This file must be in the same directory as 'status.json'.
+    The webpage displays a list of boxes with the information from a status.json file.
+    Example 'status.json':
+
+    [
+        {
+            "status": "probably not",
+            "neg_phrase": "are full",
+            "name": "UT Health San Antonio",
+            "update_time": "26-Mar-2021 10:28:39 PM",
+            "pos_phrase": "you confirm your understanding",
+            "website": "https://schedule.utmedicinesa.com/Identity/Account/Register"
+        },
+        {
+            "status": "probably not",
+            "neg_phrase": "currently no vaccine",
+            "name": "University Health",
+            "update_time": "26-Mar-2021 10:28:40 PM",
+            "pos_phrase": "A small number of",
+            "website": "https://www.universityhealthsystem.com/coronavirus-covid19/vaccine/vaccine-appointments"
+        }
+    ]
+
+REQUIREMENTS:
+
+    This script was developed with PHP v5.5.9.
 
 -->
 
