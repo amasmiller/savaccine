@@ -18,7 +18,6 @@ import os
 import time
 import smtplib
 import sys
-import smtplib
 import random
 import schedule
 import syslog

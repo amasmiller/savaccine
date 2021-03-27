@@ -194,7 +194,7 @@ Provider sites are periodically queried to look for presence or absences of phra
 <br>
 <b>Why isn't [X] site shown?</b>
 <br>
-I may not know about it.  Email me at <a href="mailto:amasmiller.com">amasmiller@gmail.com</a>.
+Updates to the site to query Walgreens and CVS are in progress.  Other than that, I may not know about provider [X].  Email me at <a href="mailto:amasmiller.com">amasmiller@gmail.com</a>.
 <br>
 <br>
 <b>Is this available in other cities?</b>
