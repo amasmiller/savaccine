@@ -2,6 +2,8 @@
 
 # TODO
 # 
+# create test site area
+#
 # cleanup documentation and TODOs
 #
 # possibly add other sites
