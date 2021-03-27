@@ -25,9 +25,13 @@ import schedule
 import syslog
 import json
 import re
+import selenium
+import urllib3
 
 from datetime import datetime
 from email.mime.text import MIMEText
+
+from selenium import webdriver
 
 PROGRAM_DESCRIPTION="""
     
@@ -78,6 +82,8 @@ PROGRAM_DESCRIPTION="""
         This script was developed with Python 3.4.3 and the packages as specified
         by the import directives.
 
+        TODO urllib3 version?
+
     """
 
 
@@ -119,6 +125,10 @@ class vaccineChecker(object):
     # see input/websites.json
     m_websites = []
 
+    # for accessing CVS/Walgreens
+    m_sd = object()
+
+
     '''
     Setup.
     '''
@@ -128,6 +138,8 @@ class vaccineChecker(object):
         self.m_outputDir = outputDir
         self.m_requestRate = requestRate
 
+        urllib3.disable_warnings() # for InsecureRequestWarning
+
         # for confirmation things are going ok, send a text/email
         schedule.every(30).minutes.do(self.heartbeat)
 
@@ -136,6 +148,14 @@ class vaccineChecker(object):
 
         self.send_message("INFO: Starting Up!")
 
+        # set up Chromedriver
+        DEBUG("INFO: Setting up selenium...")
+        chrome_options = webdriver.chrome.options.Options()
+        chrome_options.headless = True
+        # TODO make selenium path configurable.  make option to not start?
+        DEBUG("INFO: Creating selenium object...")
+        self.m_sd = webdriver.Chrome('/home/bitnami/chromedriver/chromedriver',chrome_options=chrome_options)
+        DEBUG("INFO: Done setting up selenium.")
    
     '''
     Read in credentials.json.
@@ -242,6 +262,35 @@ class vaccineChecker(object):
             DEBUG("INFO: still %s, not sending message" % (s))
         self.m_websites[i]['status'] = s
 
+    def query_walgreens(self):
+
+        DEBUG("INFO: Requesting main page from Walgreens...")
+        self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19")
+        btn = self.m_sd.find_element_by_css_selector('span.btn.btn__blue')
+        btn.click()
+        DEBUG("INFO: Requesting next page from Walgreens...")
+        self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19/location-screening")
+        element = self.m_d.find_element_by_id("inputLocation")
+        element.clear()
+
+        # TODO make location configurable?
+        DEBUG("INFO: Selecting San Antonio...")
+        element.send_keys("San Antonio, TX")
+        button = self.m_sd.find_element_by_css_selector("button.btn")
+        button.click()
+        time.sleep(0.75)
+
+        # TODO add timeout
+        DEBUG("INFO: Waiting for Walgreens result...")
+        while True:
+            try:
+                alertElement = self.m_sd.find_element_by_css_selector("p.fs16")
+            except NoSuchElementException:
+                time.sleep(0.5)
+    
+        DEBUG("INFO: Found walgreens result '%s'" % (alertElement.text))
+
+
 
     '''
     primary loop.  query the self.m_websites and keep track of status.
@@ -275,6 +324,10 @@ class vaccineChecker(object):
                         sys.exit(-1)
     
             try:
+
+                # special cases (TODO add ability to disable?)
+                self.query_walgreens()
+
                 # populate the file we use for communication with PHP
                 if (not os.path.exists(self.m_outputDir)):
                     os.makedirs(self.m_outputDir)
@@ -294,7 +347,7 @@ class vaccineChecker(object):
                 f.close()
                 DEBUG("Wrote %s" % (filename))
                 
-                # give the good server some time to rest
+                # give the good servers some time to rest
                 VARIANCE = 10 # seconds
                 sleeptime = random.randint(max(self.MIN_REQUEST_RATE, self.m_requestRate - VARIANCE), max(self.MIN_REQUEST_RATE, self.m_requestRate + VARIANCE))
                 DEBUG("checking again in %d seconds..." % (sleeptime))
