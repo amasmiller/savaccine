@@ -19,7 +19,7 @@
     },
     {
         "name": "Test Site",
-        "website": "https://amasmiller.com/savaccine/test.php",
+        "website": "https://amasmiller.com/test.php",
         "neg_phrase": "this is a bad phrase",
         "pos_phrase": "this is a good phrase"
     }
