@@ -6,7 +6,7 @@
 # - https://www.walgreens.com/findcare/vaccination/covid-19/location-screening#!
 # - https://www.cvs.com/immunizations/covid-19-vaccine
 #
-# test on different size devices
+# test on Zacs/English's iPhone, English's Mac, upstairs computer, chromebook
 #
 #
 
