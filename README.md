@@ -2,13 +2,13 @@
 
 ## What is this page?
 
-This project is used bby https://amasmiller.com/savaccine/ to show availablity of the COVID-19 vaccine in San Antonio, TX.
+This project is used by https://amasmiller.com/savaccine/ to show availablity of the COVID-19 vaccine in San Antonio, TX.
 
 ## How does it work?
 
 Vaccine provider websites are periodically queried to look for presence or absence of phrases like "currently no vaccine".
 
-`index.php` is the website, `vaccineChecker.py` is the background task for finding status.  See respective README information at the top of each file.
+`index.php` is the website, `vaccineChecker.py` is the background task for querying the websites.  See respective README information at the top `index.php` / `vaccineChecker.py`.
 
 ## What if I want to use it for my city?
 
@@ -21,8 +21,8 @@ You'll need to:
     * Python dependencies in the `import`s of `vaccineChecker.py` (a.k.a. `pip install....`)
 * download and extract a copy of this repository to a location NOT served by the web server
 * in the extracted directory:
-  * create your own `input/credentials.json` (see top of `vaccineChecker.py`)
+  * create your own `input/credentials.json` (see top of `vaccineChecker.py` for format)
   * modify `input/websites.json` for the websites you wish to monitor
-  * run the `vaccineChecker.py` as a background task
+  * run `vaccineChecker.py` as a background task
 * create a new directory to be served by the webserver.  within this directory, create softlinks to `index.php` and `status.json`.
 * view `index.php` on the web!  debug, test, repeat!
