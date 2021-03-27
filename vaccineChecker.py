@@ -25,7 +25,6 @@ import syslog
 import json
 import re
 
-from argparse import RawTextHelpFormatter
 from datetime import datetime
 from email.mime.text import MIMEText
 
@@ -312,7 +311,7 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGINT, SignalHandler)
 
-    parser = argparse.ArgumentParser(description=PROGRAM_DESCRIPTION, formatter_class=RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description=PROGRAM_DESCRIPTION, formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument(
             '--input-dir',
