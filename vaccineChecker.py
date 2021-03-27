@@ -37,13 +37,15 @@ PROGRAM_DESCRIPTION="""
     
     OVERVIEW:
 
-    This program is meant to be a daemon to run in background for querying 
-    vaccine provider websites, looking for confirmation or lack of phrases
-    indicating availabiltiy, and outputting a 'status.json' file, which is
-    used as an input to 'status.php'
+    This program is a daemon for inspectinv vaccine provider websites, 
+    looking for confirmation of lack of phrases indicating availability.
+    The result is written to a 'status.json' file in the directory 
+    specified by --output-dir.
     
-    This program expects a valid 'credentials.json' file in the same
-    directory with contents similar to:
+    This program expects a valid 'credentials.json' file in the directory
+    specified by --input-dir.  This file should contain the authentication
+    credentials for an SMTP server and login and an email recipient
+    for status messages to be sent to.  Example 'credentials.json' file:
        {
        "email" : "foo@gmail.com",
        "password" : "bar",
@@ -51,14 +53,34 @@ PROGRAM_DESCRIPTION="""
        "smtp_host" : "smtp.myserver.com",
        "smtp_port" : 465
        }
+    
+    This program also expects a valid 'websites.json' file in the directory
+    specified by --input dir.  This file defines the websites to query, along with 
+    the positive/negative phrases to search for.  Example 'websites.json' file:
+    [
+        {
+            "name": "UT Health San Antonio",
+            "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
+            "neg_phrase": "are full",
+            "pos_phrase": "you confirm your understanding"
+        }
+    ]
+
 
     EXAMPLE USE (Command Line):
 
-        TODO 
+        # run the daemon with a request rate of 5 minutes (300 seconds), outputting
+        # status to the 'status' directory
+        ./vaccineChecker.py --input-dir input --output-dir status --request-rate 300
+
+        # run the daemon with a request rate of 30 seconds, output status to
+        # the 'out' directory
+        ./vaccineChecker.py --input-dir input --output-dir out --request-rate 30
 
     REQUIREMENTS:
 
-        This script requires Python TODO and packages TODO.
+        This script was developed with Python 3.4.3 and the packages as specified
+        by the import directives.
 
     """
 
@@ -300,7 +322,7 @@ if __name__ == "__main__":
             '--input-dir',
             action="store",
             dest="inputDir",
-            help="The directory where 'credentials.json' and 'websites.json' will be read from",
+            help="The directory where 'credentials.json' and 'websites.json' will be read from.  Default directory is 'input'.",
             required=False,
             metavar='[X]',
             default="input")
@@ -309,19 +331,19 @@ if __name__ == "__main__":
             '--output-dir',
             action="store",
             dest="outputDir",
-            help="The directory where 'status.json' and the archives of it will be written to",
+            help="The directory where 'status.json' and the archives of it will be written to.  Default directory is 'status'.",
             required=False,
             metavar='[X]',
-            default=".")
+            default="status")
 
     parser.add_argument(
             '--request-rate',
             action="store",
             dest="requestRate",
-            help="How often, in seconds, the status will be requested from the sites in websites.json",
+            help="How often, in seconds, the status will be requested from the sites in 'websites.json'.",
             required=False,
             metavar='[X]',
-            default=4*60)
+            default=5*60)
 
     args = parser.parse_args()
 
