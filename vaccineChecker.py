@@ -1,15 +1,5 @@
 #!/usr/bin/python3
 
-# TODO
-# 
-# possibly add other sites
-# - https://www.walgreens.com/findcare/vaccination/covid-19/location-screening#!
-# - https://www.cvs.com/immunizations/covid-19-vaccine
-#
-# test on Zacs/English's iPhone, English's Mac, upstairs computer, chromebook
-#
-#
-
 import traceback
 import requests
 import signal
@@ -20,6 +10,7 @@ import smtplib
 import sys
 import random
 import schedule
+import urllib3
 import syslog
 import json
 import re
@@ -34,7 +25,9 @@ PROGRAM_DESCRIPTION="""
     This program is a daemon for inspecting vaccine provider websites, 
     looking for confirmation of lack of phrases indicating availability.
     The result is written to a 'status.json' file in the directory 
-    specified by --output-dir.
+    specified by --output-dir.  Archives of the 'status.json' and the HTML
+    content of the website changes are archived to the '[output-dir]/archive'
+    directory.
     
     This program expects a valid 'credentials.json' file in the directory
     specified by --input-dir.  This file should contain the authentication
@@ -126,6 +119,8 @@ class vaccineChecker(object):
         self.m_outputDir = outputDir
         self.m_requestRate = requestRate
 
+        urllib3.disable_warnings() # for InsecureRequestWarning
+
         # for confirmation things are going ok, send a text/email
         schedule.every(30).minutes.do(self.heartbeat)
 
@@ -208,7 +203,7 @@ class vaccineChecker(object):
     using the credentials in EMAIL and PASSWORD.
     '''
     def send_message(self, msg):
-        DEBUG(msg)
+        DEBUG("INFO: send_message: " + msg)
 
         msg = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), msg)
         msg = MIMEText(msg)
@@ -233,9 +228,20 @@ class vaccineChecker(object):
     '''
     Handle when a website status changes (i.e. from "probably not" to "maybe")
     '''
-    def handle_status(self, s, i):
+    def handle_status(self, s, i, html):
         if s != self.m_websites[i]['status']:
             self.send_message("INFO: %s changed to %s" % (self.m_websites[i]['website'], s))
+
+            # save off HTML that we make
+            archive_dir = self.m_outputDir + "/archive"
+            if (not os.path.exists(archive_dir)):
+                os.makedirs(archive_dir)
+            filename = archive_dir + "/" + self.m_websites[i]['name'] + ".html." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
+            f = open(filename, "w")
+            f.write(html)
+            f.close()
+            DEBUG("INFO: Wrote %s" % (filename))
+                
         else:
             DEBUG("INFO: still %s, not sending message" % (s))
         self.m_websites[i]['status'] = s
@@ -251,21 +257,21 @@ class vaccineChecker(object):
 
             for i in range(0, len(self.m_websites)):
                 try:
-                    DEBUG("asking %s at %s ..." % (self.m_websites[i]['name'], self.m_websites[i]['website']))
+                    DEBUG("INFO: asking %s at %s ..." % (self.m_websites[i]['name'], self.m_websites[i]['website']))
                     r = requests.get(self.m_websites[i]['website'], timeout=self.TIMEOUT, verify=False)
                     html = re.sub("(<!--.*?-->)", "", r.text, flags=re.DOTALL) # remove HTML comments, outdated information sometimes lives here
 
                     if self.m_websites[i]['pos_phrase'] != "" and self.m_websites[i]['pos_phrase'] in html:
-                        self.handle_status("probably", i)
+                        self.handle_status("probably", i, html)
                     elif self.m_websites[i]['neg_phrase'] in html:
-                        self.handle_status("probably not", i)
+                        self.handle_status("probably not", i, html)
                     else:
-                        self.handle_status("maybe", i)
+                        self.handle_status("maybe", i, html)
 
                     self.m_websites[i]['update_time'] = time.strftime("%d-%b-%Y %I:%M:%S %p")
                 except Exception as e:
                     if isinstance(e, requests.exceptions.Timeout):
-                        DEBUG("Timeout: " + str(e) + "...continuing")
+                        DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
                         continue
                     else:
                         DEBUG(traceback.format_exc())
@@ -283,19 +289,19 @@ class vaccineChecker(object):
                 f.close()
 
                 # save off all that we make
-                ARCHIVE_DIR = self.m_outputDir + "/archive"
-                if (not os.path.exists(ARCHIVE_DIR)):
-                    os.makedirs(ARCHIVE_DIR)
-                filename = ARCHIVE_DIR + "/" + STATUS_JSON_FILENAME + "." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
+                archive_dir = self.m_outputDir + "/archive"
+                if (not os.path.exists(archive_dir)):
+                    os.makedirs(archive_dir)
+                filename = archive_dir + "/" + STATUS_JSON_FILENAME + "." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
                 f = open(filename, "w")
                 f.write(content)
                 f.close()
-                DEBUG("Wrote %s" % (filename))
+                DEBUG("INFO: Wrote %s" % (filename))
                 
                 # give the good server some time to rest
                 VARIANCE = 10 # seconds
                 sleeptime = random.randint(max(self.MIN_REQUEST_RATE, self.m_requestRate - VARIANCE), max(self.MIN_REQUEST_RATE, self.m_requestRate + VARIANCE))
-                DEBUG("checking again in %d seconds..." % (sleeptime))
+                DEBUG("INFO: checking again in %d seconds..." % (sleeptime))
                 time.sleep(sleeptime)
 
                 schedule.run_pending()
