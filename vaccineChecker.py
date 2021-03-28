@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+# standard libraries
 import traceback
 import requests
 import signal
@@ -9,14 +10,14 @@ import time
 import smtplib
 import sys
 import random
-import schedule
 import urllib3
 import syslog
 import json
 import re
-
 from datetime import datetime
 from email.mime.text import MIMEText
+import schedule
+
 
 PROGRAM_DESCRIPTION="""
     
