@@ -1,5 +1,6 @@
-<!--
+<?php
 
+/*
 OVERVIEW:
 
     This is the webpage that reads the `status.json` produced by 
@@ -32,10 +33,22 @@ OVERVIEW:
 REQUIREMENTS:
 
     This script was developed with PHP v5.5.9.
+*/
 
--->
+?>
 
 <html>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-186062303-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-186062303-1');
+</script>
+
 <style>
 
 #button 
