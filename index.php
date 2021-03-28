@@ -176,7 +176,7 @@ $now = new DateTime("now", new DateTimeZone('America/Chicago'));
 print_n("Last page refresh: ".$now->format('d-M-Y h:i:s A'));  
 print_n("<br><br>");
 
-print_n("This page refreshes every ".($DEBUG_FAST ? "second." : "$REFRESH_RATE minutes.")); 
+print_n("This page refreshes every ".($DEBUG_FAST ? "second" : "$REFRESH_RATE minutes" . " or by clicking <a href=\"\">here</a>.")); 
 
 print_n("</center>");
 
