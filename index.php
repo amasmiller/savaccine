@@ -11,24 +11,24 @@ OVERVIEW:
     The webpage displays a list of boxes with the information from a status.json file.
     Example 'status.json':
 
-    [
+{
+    "UT Health San Antonio" : 
         {
             "status": "probably not",
             "neg_phrase": "are full",
-            "name": "UT Health San Antonio",
             "update_time": "26-Mar-2021 10:28:39 PM",
             "pos_phrase": "you confirm your understanding",
             "website": "https://schedule.utmedicinesa.com/Identity/Account/Register"
         },
+    "University Health" :
         {
             "status": "probably not",
             "neg_phrase": "currently no vaccine",
-            "name": "University Health",
             "update_time": "26-Mar-2021 10:28:40 PM",
             "pos_phrase": "A small number of",
             "website": "https://www.universityhealthsystem.com/coronavirus-covid19/vaccine/vaccine-appointments"
         }
-    ]
+}
 
 REQUIREMENTS:
 
@@ -135,14 +135,14 @@ print_n("<br><br>");
 print_n("Clicking the button opens the site.");
 print_n("<br><br>");
 $allurls = "";
-foreach ($items as $item)
+foreach ($items as $name => $info)
 {
-    if ($item->name == "Test Site" && !$DEBUG_TEST) { continue; }
+    if ($name == "Test Site" && !$DEBUG_TEST) { continue; }
 
-    $text = "<b>$item->name</b><br>slots " . $item->status . " available<br>as of " . $item->update_time;
+    $text = "<b>$name</b><br>slots " . $info->status . " available<br>as of " . $info->update_time;
 
     $style = "";
-    switch ($item->status)
+    switch ($info->status)
     {
         case "probably":
             $style .= "background-color: lightgreen";
@@ -158,11 +158,11 @@ foreach ($items as $item)
             break;
     }
     
-    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$item->website."', '_blank');\"/>");
+    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$info->website."', '_blank');\"/>");
     print_n("<span>$text</span>");
     print_n("</button>");
 
-    $allurls .= "window.open('".$item->website."', '_blank');";
+    $allurls .= "window.open('".$info->website."', '_blank');";
 }
 
 $text = "I'm not sure I trust this site.<br><br>Open all of them.";

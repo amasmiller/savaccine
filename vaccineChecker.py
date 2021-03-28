@@ -51,14 +51,21 @@ PROGRAM_DESCRIPTION="""
     This program always expects a valid 'websites.json' file in the directory
     specified by --input-dir.  This file defines the websites to query, along with 
     the positive/negative phrases to search for.  Example 'websites.json' file:
-        [
-            {
-                "name": "UT Health San Antonio",
-                "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
-                "neg_phrase": "are full",
-                "pos_phrase": "you confirm your understanding"
-            }
-        ]
+
+        "UT Health San Antonio" : {
+            "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
+            "neg_phrase": "are full",
+            "pos_phrase": "you confirm your understanding"
+        },
+        "Test Site" : {
+            "website": "http://mytestsite.com/mydirectory",
+            "neg_phrase": "no",
+            "pos_phrase": "yes",
+        }
+
+    To handle more complex websites that require user navigation, special command line
+    options have been added (--walgreens, --cvs, etc..).   If these options are passed,
+    the site will be queried, in addition to those in 'websites.json'.
 
 
     EXAMPLE USE (Command Line):
@@ -119,16 +126,17 @@ class vaccineChecker(object):
     m_alertRate = 0 # how often, in minutes, we should send a emailed alert with script status
 
     # see input/websites.json
-    m_websites = []
+    m_websites = {}
 
-    # for accessing CVS/Walgreens
+    # for accessing sites that require special navigation
+    m_walgreensQuery = ""
     m_sd = object()
 
 
     '''
     Setup.
     '''
-    def __init__(self, inputDir, outputDir, requestRate, alertRate):
+    def __init__(self, inputDir, outputDir, requestRate, alertRate, walgreensQuery):
 
         DEBUG("INFO: Initializing....")
 
@@ -136,8 +144,9 @@ class vaccineChecker(object):
         self.m_outputDir = outputDir
         self.m_requestRate = requestRate
         self.m_alertRate = alertRate
+        self.m_walgreensQuery = walgreensQuery
 
-        urllib3.disable_warnings() # for InsecureRequestWarning
+        urllib3.disable_warnings() # for ignoring InsecureRequestWarning for https
 
         # if configured, for confirmation things are going ok, send a text/email
         if (0 != self.m_alertRate):
@@ -148,18 +157,18 @@ class vaccineChecker(object):
             DEBUG("INFO: --alert-rate not passed, no alerts will be sent.")
 
         self.send_message("INFO: Initalization complete!")
-
+        
+        # TODO don't require use of websites.json if --walgreens query passed?
         self.read_websites()
 
+        if (self.m_walgreensQuery != ""):
+            DEBUG("INFO: Setting up selenium for queries requiring user navigation...")
+            options = webdriver.firefox.options.Options()
+            options.headless = True
+            DEBUG("INFO: Creating selenium object...")
+            self.m_sd = webdriver.Firefox(options=options)
+            DEBUG("INFO: Done setting up selenium.")
 
-        DEBUG("INFO: Setting up selenium...")
-        options = webdriver.firefox.options.Options()
-        options.headless = True
-        # TODO make selenium path configurable.  make option to not start along 
-        # with walgreens and CVS
-        DEBUG("INFO: Creating selenium object...")
-        self.m_sd = webdriver.Firefox(options=options)
-        DEBUG("INFO: Done setting up selenium.")
    
     '''
     Read in credentials.json.
@@ -218,7 +227,8 @@ class vaccineChecker(object):
             self.m_websites = json.loads(f.read())
 
             # initialize things the user doesn't supply
-            for site in self.m_websites:
+            for name, info in self.m_websites.items():
+                site = self.m_websites[name]
                 if "status" not in site:
                     site["status"] =  "probably not"
                 if "update_time" not in site:
@@ -263,23 +273,29 @@ class vaccineChecker(object):
     '''
     Handle when a website status changes (i.e. from "probably not" to "maybe")
     '''
-    def handle_status(self, s, i, html):
-        if s != self.m_websites[i]['status']:
-            self.send_message("INFO: %s changed to %s" % (self.m_websites[i]['website'], s))
+    def handle_status(self, status, name, html):
+
+        site = self.m_websites[name]
+        if status != site['status']:
+            self.send_message("INFO: %s changed to %s" % (name, status))
 
             # save off HTML that we make
             archive_dir = self.m_outputDir + "/archive"
             if (not os.path.exists(archive_dir)):
                 os.makedirs(archive_dir)
-            filename = archive_dir + "/" + self.m_websites[i]['name'] + ".html." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
+            filename = archive_dir + "/" + name + ".html." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
             f = open(filename, "w")
             f.write(html)
             f.close()
             DEBUG("INFO: Wrote %s" % (filename))
         else:
-            DEBUG("INFO: still %s" % (s))
-        self.m_websites[i]['status'] = s
+            DEBUG("INFO: still %s" % (status))
 
+        site['status'] = status
+
+    '''
+    For querying the Walgreens page for availability.
+    '''
     def query_walgreens(self):
 
         DEBUG("INFO: Requesting main page from Walgreens...")
@@ -291,24 +307,31 @@ class vaccineChecker(object):
         element = self.m_sd.find_element_by_id("inputLocation")
         element.clear()
 
-        # TODO make location configurable?
-        DEBUG("INFO: Selecting San Antonio...")
-        element.send_keys("San Antonio, TX")
+        DEBUG("INFO: Asking Walgreens about the location '%s'" % (self.m_walgreensQuery))
+        element.send_keys(self.m_walgreensQuery)
         button = self.m_sd.find_element_by_css_selector("button.btn")
         button.click()
         time.sleep(0.75)
 
-        # TODO add timeout
+        timeout = time.time() + 30 # 30 sec timeout
         DEBUG("INFO: Waiting for Walgreens result...")
+        response = object()
         while True:
+            if (time.time() > timeout):
+                DEBUG("WARNING: Timeout waiting for Walgreens result, continuing")
             try:
-                alertElement = self.m_sd.find_element_by_css_selector("p.fs16")
+                response = self.m_sd.find_element_by_css_selector("p.fs16")
                 break
             except NoSuchElementException:
                 time.sleep(0.5)
-    
-        DEBUG("INFO: Found walgreens result '%s'" % (alertElement.text))
 
+        DEBUG("INFO: Found walgreens result '%s'" % (response.text))
+        if "Appointments unavailable" == response.text:
+            DEBUG("INFO: Walgreens appointments are NOT available!")
+        elif "Please enter a valid city and state or ZIP":
+            DEBUG("WARNING: Walgreens rejectd '%s' query as invalid" % (self.m_walgreensQuery))
+        else:
+            DEBUG("INFO: Walgreens appointments are MAYBE available.")
 
 
     '''
@@ -319,20 +342,21 @@ class vaccineChecker(object):
         # primary loop
         while self.m_attempts < self.MAX_ATTEMPTS:
 
-            for i in range(0, len(self.m_websites)):
+            for name, info in self.m_websites.items():
                 try:
-                    DEBUG("INFO: asking %s at %s ..." % (self.m_websites[i]['name'], self.m_websites[i]['website']))
-                    r = requests.get(self.m_websites[i]['website'], timeout=self.TIMEOUT, verify=False)
+                    site = self.m_websites[name]
+                    DEBUG("INFO: asking %s at %s ..." % (name, info['website']))
+                    r = requests.get(site['website'], timeout=self.TIMEOUT, verify=False)
                     html = re.sub("(<!--.*?-->)", "", r.text, flags=re.DOTALL) # remove HTML comments, outdated information sometimes lives here
 
-                    if self.m_websites[i]['pos_phrase'] != "" and self.m_websites[i]['pos_phrase'] in html:
-                        self.handle_status("probably", i, html)
-                    elif self.m_websites[i]['neg_phrase'] in html:
-                        self.handle_status("probably not", i, html)
+                    if site['pos_phrase'] != "" and site['pos_phrase'] in html:
+                        self.handle_status("probably", name, html)
+                    elif site['neg_phrase'] in html:
+                        self.handle_status("probably not", name, html)
                     else:
-                        self.handle_status("maybe", i, html)
+                        self.handle_status("maybe", name, html)
 
-                    self.m_websites[i]['update_time'] = time.strftime("%d-%b-%Y %I:%M:%S %p")
+                    site['update_time'] = time.strftime("%d-%b-%Y %I:%M:%S %p")
                 except Exception as e:
                     if isinstance(e, requests.exceptions.Timeout):
                         DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
@@ -344,8 +368,9 @@ class vaccineChecker(object):
     
             try:
 
-                # special cases (TODO add ability to disable?)
-                self.query_walgreens()
+                # special cases that require website navigation
+                if ("" != self.m_walgreensQuery):
+                    self.query_walgreens()
 
                 # populate the file we use for communication with PHP
                 if (not os.path.exists(self.m_outputDir)):
@@ -421,6 +446,15 @@ if __name__ == "__main__":
             required=False,
             metavar='[X]',
             default=5*60)
+    
+    parser.add_argument(
+            '--walgreens',
+            action="store",
+            dest="walgreensQuery",
+            help="If passed, what location to use for a Walgreens query for vaccine availability.",
+            required=False,
+            metavar='[X]',
+            default="")
 
     args = parser.parse_args()
 
@@ -439,5 +473,5 @@ if __name__ == "__main__":
     else:
         args.alertRate = 0
 
-    vc = vaccineChecker(args.inputDir, args.outputDir, args.requestRate, args.alertRate)
+    vc = vaccineChecker(args.inputDir, args.outputDir, args.requestRate, args.alertRate, args.walgreensQuery)
     vc.run()
