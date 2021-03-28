@@ -35,20 +35,21 @@ PROGRAM_DESCRIPTION="""
     content of the website changes are archived to the '[output-dir]/archive'
     directory.
     
-    This program expects a valid 'credentials.json' file in the directory
+    If the argument --alert-rate is passed, this program expects a 
+    valid 'credentials.json' file in the directory
     specified by --input-dir.  This file should contain the authentication
-    credentials for an SMTP server and login and an email recipient
+    credentials for an SMTP server and login and email recipients
     for status messages to be sent to.  Example 'credentials.json' file:
        {
        "email" : "foo@gmail.com",
        "password" : "bar",
-       "recipient" : "foobar@tmomail.net",
+       "recipients" : "foobar@tmomail.net, myname@yahoo.com",
        "smtp_host" : "smtp.myserver.com",
        "smtp_port" : 465
        }
     
-    This program also expects a valid 'websites.json' file in the directory
-    specified by --input dir.  This file defines the websites to query, along with 
+    This program always expects a valid 'websites.json' file in the directory
+    specified by --input-dir.  This file defines the websites to query, along with 
     the positive/negative phrases to search for.  Example 'websites.json' file:
         [
             {
@@ -67,8 +68,9 @@ PROGRAM_DESCRIPTION="""
         ./vaccineChecker.py --input-dir input --output-dir status --request-rate 300
 
         # run the daemon with a request rate of 30 seconds, output status to
-        # the 'out' directory
-        ./vaccineChecker.py --input-dir input --output-dir out --request-rate 30
+        # the 'out' directory, and send an email heartbeat and erros to the 'recipients'
+        # in 'credentials.json' every 60 minutes.
+        ./vaccineChecker.py --input-dir input --output-dir out --request-rate 30 --alert-rate 60
 
     REQUIREMENTS:
 
@@ -101,7 +103,7 @@ class vaccineChecker(object):
     # to be populated by read of credentials.json
     EMAIL = ""
     PASSWORD = ""
-    RECIPIENT = ""
+    RECIPIENTS =  []
     SMTP_HOST = ""
     SMTP_PORT = 0
     ##############################################
@@ -114,6 +116,7 @@ class vaccineChecker(object):
     m_inputDir = "" # location of credentials.json, websites.json, FAQ.md
     m_outputDir = "" # the directory were status.json gets written to
     m_requestRate = 0 # how often, in seconds, we should ask for website status
+    m_alertRate = 0 # how often, in minutes, we should send a emailed alert with script status
 
     # see input/websites.json
     m_websites = []
@@ -125,21 +128,29 @@ class vaccineChecker(object):
     '''
     Setup.
     '''
-    def __init__(self, inputDir, outputDir, requestRate):
+    def __init__(self, inputDir, outputDir, requestRate, alertRate):
+
+        DEBUG("INFO: Initializing....")
 
         self.m_inputDir = inputDir
         self.m_outputDir = outputDir
         self.m_requestRate = requestRate
+        self.m_alertRate = alertRate
 
         urllib3.disable_warnings() # for InsecureRequestWarning
 
-        # for confirmation things are going ok, send a text/email
-        schedule.every(30).minutes.do(self.heartbeat)
+        # if configured, for confirmation things are going ok, send a text/email
+        if (0 != self.m_alertRate):
+            self.read_credentials()
+            DEBUG("INFO: --alert-rate passed, configuring to send heartbeat message every %d minutes" % (self.m_alertRate))
+            schedule.every(self.m_alertRate).minutes.do(self.heartbeat)
+        else:
+            DEBUG("INFO: --alert-rate not passed, no alerts will be sent.")
 
-        self.read_credentials()
+        self.send_message("INFO: Initalization complete!")
+
         self.read_websites()
 
-        self.send_message("INFO: Starting Up!")
 
         DEBUG("INFO: Setting up selenium...")
         options = webdriver.firefox.options.Options()
@@ -160,7 +171,7 @@ class vaccineChecker(object):
 {
 "email" : "foo@gmail.com",
 "password" : "bar",
-"recipient" : "foobar@tmomail.net",
+"recipients" : "foobar@tmomail.net,myname@yahoo.com",
 "smtp_host" : "smtp.myserver.com",
 "smtp_port" : 465
 }
@@ -173,9 +184,10 @@ class vaccineChecker(object):
             f = open(filename)
             c = json.loads(f.read())
             f.close()
+
             self.EMAIL = c['email']
             self.PASSWORD = c['password']
-            self.RECIPIENT = c['recipient']
+            self.RECIPIENTS = c['recipients']
             self.SMTP_HOST = c['smtp_host']
             self.SMTP_PORT = c['smtp_port']
             DEBUG("INFO: Successfully read credentials file.")
@@ -219,22 +231,25 @@ class vaccineChecker(object):
             sys.exit(-1)
 
     '''
-    Given a string, logs it and sends an email to RECIPIENT ,
+    Given a string, logs it.  If alerts are enabled, it sends an email to RECIPIENTS,
     using the credentials in EMAIL and PASSWORD.
     '''
-    def send_message(self, msg):
-        DEBUG("INFO: send_message: " + msg)
+    def send_message(self, s):
 
-        msg = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), msg)
+        DEBUG(s)
+        if (self.m_alertRate == 0):
+            return
+
+        msg = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), s)
         msg = MIMEText(msg)
         msg['Subject'] = 'Vaccine Checker Script'
         msg['From'] = self.EMAIL
-        msg['To'] = self.RECIPIENT
+        msg['To'] = self.RECIPIENTS
 
-        DEBUG("INFO: Attempting to send email...")
+        DEBUG("INFO: Attempting to send email with '%s'..." % (s))
         server = smtplib.SMTP_SSL(self.SMTP_HOST, self.SMTP_PORT)
         server.login(self.EMAIL, self.PASSWORD)
-        server.sendmail(self.EMAIL, self.RECIPIENT, str(msg))
+        server.sendmail(self.EMAIL, self.RECIPIENTS, str(msg))
         server.quit()
         DEBUG("INFO: Successfully sent email!")
 
@@ -261,9 +276,8 @@ class vaccineChecker(object):
             f.write(html)
             f.close()
             DEBUG("INFO: Wrote %s" % (filename))
-                
         else:
-            DEBUG("INFO: still %s, not sending message" % (s))
+            DEBUG("INFO: still %s" % (s))
         self.m_websites[i]['status'] = s
 
     def query_walgreens(self):
@@ -373,6 +387,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=PROGRAM_DESCRIPTION, formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument(
+            '--alert-rate',
+            action="store",
+            dest="alertRate",
+            help="If passed, defines how often, in minutes, the program will email the 'recipients' field in 'credentials.json' to send a periodic update of status and/or errors.  If not passed, 'credentials.json' is not required.",
+            required=False,
+            metavar='[X]',
+            default="")
+
+    parser.add_argument(
             '--input-dir',
             action="store",
             dest="inputDir",
@@ -406,6 +429,15 @@ if __name__ == "__main__":
     except Exception as e:
         DEBUG("ERROR: --request-rate must be a number")
         sys.exit(-1)
+    
+    if (args.alertRate != ""):
+        try:
+            args.alertRate = int(args.alertRate)
+        except Exception as e:
+            DEBUG("ERROR: --alert-rate must be a number")
+            sys.exit(-1)
+    else:
+        args.alertRate = 0
 
-    vc = vaccineChecker(args.inputDir, args.outputDir, args.requestRate)
+    vc = vaccineChecker(args.inputDir, args.outputDir, args.requestRate, args.alertRate)
     vc.run()
