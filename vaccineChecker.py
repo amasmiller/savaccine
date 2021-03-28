@@ -325,8 +325,8 @@ class vaccineChecker(object):
                         continue
                     else:
                         DEBUG(traceback.format_exc())
-                        self.send_message("Other Error of type %s : %s ... exiting." % (type(e).__name__, str(e)))
-                        sys.exit(-1)
+                        self.send_message("Other Error of type %s : %s ... need assistance!" % (type(e).__name__, str(e)))
+                        continue
     
             try:
 
