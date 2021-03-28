@@ -1,12 +1,6 @@
 #!/usr/bin/python3
 
-# 
-# possibly add other sites
-# - https://www.walgreens.com/findcare/vaccination/covid-19/location-screening#!
-# - https://www.cvs.com/immunizations/covid-19-vaccine
-#
-#
-
+# standard libraries
 import traceback
 import requests
 import signal
@@ -16,18 +10,19 @@ import time
 import smtplib
 import sys
 import random
-import schedule
 import urllib3
 import syslog
 import json
 import re
 import selenium
 import urllib3
-
 from datetime import datetime
 from email.mime.text import MIMEText
 
+# non-standard libraries
+import schedule 
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 
 PROGRAM_DESCRIPTION="""
     
@@ -80,7 +75,7 @@ PROGRAM_DESCRIPTION="""
         This script was developed with Python 3.4.3 and the packages as specified
         by the import directives.
 
-        TODO urllib3 version?
+        TODO urllib3, selenium version?
 
     """
 
@@ -146,13 +141,13 @@ class vaccineChecker(object):
 
         self.send_message("INFO: Starting Up!")
 
-        # set up Chromedriver
         DEBUG("INFO: Setting up selenium...")
-        chrome_options = webdriver.chrome.options.Options()
-        chrome_options.headless = True
-        # TODO make selenium path configurable.  make option to not start?
+        options = webdriver.firefox.options.Options()
+        options.headless = True
+        # TODO make selenium path configurable.  make option to not start along 
+        # with walgreens and CVS
         DEBUG("INFO: Creating selenium object...")
-        self.m_sd = webdriver.Chrome('/home/bitnami/chromedriver/chromedriver',chrome_options=chrome_options)
+        self.m_sd = webdriver.Firefox(options=options)
         DEBUG("INFO: Done setting up selenium.")
    
     '''
@@ -279,7 +274,7 @@ class vaccineChecker(object):
         btn.click()
         DEBUG("INFO: Requesting next page from Walgreens...")
         self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19/location-screening")
-        element = self.m_d.find_element_by_id("inputLocation")
+        element = self.m_sd.find_element_by_id("inputLocation")
         element.clear()
 
         # TODO make location configurable?
@@ -294,6 +289,7 @@ class vaccineChecker(object):
         while True:
             try:
                 alertElement = self.m_sd.find_element_by_css_selector("p.fs16")
+                break
             except NoSuchElementException:
                 time.sleep(0.5)
     

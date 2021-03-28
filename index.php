@@ -204,7 +204,7 @@ Don't know.  This was homegrown for San Antonio, like an HEB tortilla.  The sour
 <br>
 <b>Doesn't this spam the provider servers?</b>
 <br>
-This site limits the number of requests to every <?php print_n($REFRESH_RATE); ?> minutes, regardless of how many people visit or refresh this page.  This site is a funnel of information, not a spambot.
+Even if 1 million people refresh this site every second, the providers servers still only get <?php print_n(strval(60/$REFRESH_RATE)); ?> requests per hour.  The requests to provider websites are run in a throttled background task.  This site is a funnel of information, not a spambot.
 <br>
 <br>
 <b>Who made this?</b>
