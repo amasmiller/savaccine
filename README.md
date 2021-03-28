@@ -33,7 +33,7 @@ You'll need to:
 ```  
 
 * in the extracted directory:
-  * create your own `input/credentials.json` (see top of `vaccineChecker.py` for format)
+  * if you would like alerts with script status to be sent, as enabled by the `--alert-rate` argument, create your own `input/credentials.json` (see top of `vaccineChecker.py` for format)
   * modify `input/websites.json` for the websites you wish to monitor
   * run `vaccineChecker.py` as a background task
 
