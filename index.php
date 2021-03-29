@@ -220,6 +220,11 @@ Don't know.  This was homegrown for San Antonio, like an HEB tortilla.  The sour
 Even if 1 million people refresh this site every second, the providers servers still only get <?php print_n(strval(60/$REFRESH_RATE)); ?> requests per hour.  The requests to provider websites are run in a throttled background task.  This site is a funnel of information, not a spambot.
 <br>
 <br>
+<b>Is this different than vaccinespotter.org?</b>
+<br>
+Similar concept, but just for San Antonio, and not affiliated with vaccinespotter.org.
+<br>
+<br>
 <b>Who made this?</b>
 <br>
 Squirrels, with help from a human you can contact at <a href="mailto:amasmiller@gmail.com">amasmiller@gmail.com</a> or read about <a href="https://amasmiller.com/wp/about/">here</a>.
