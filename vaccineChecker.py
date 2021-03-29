@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 # standard libraries
+import enum
 import traceback
 import requests
 import signal
@@ -63,8 +64,7 @@ PROGRAM_DESCRIPTION="""
             "pos_phrase": "yes",
         }
 
-        TODO include walgreens, CVS, others supported
-
+        TODO include "Walgreens" and "CVS"
 
     EXAMPLE USE (Command Line):
 
@@ -102,6 +102,17 @@ def SignalHandler(sig, frame):
     DEBUG("INFO: Program interrupted via Ctrl-C.  Exiting")
     sys.exit(0)
 
+'''
+Enum class for provider status.
+'''
+class Availability(enum.Enum):
+    PROBABLY_NOT = "probably not"
+    MAYBE = "maybe"
+    PROBABLY = "probably"
+
+'''
+Primary class. 
+'''
 class vaccineChecker(object):
 
     ##############################################
@@ -126,9 +137,8 @@ class vaccineChecker(object):
     # see input/websites.json
     m_websites = {}
 
-    # for accessing sites that require special navigation
+    # selenium object for accessing sites that require special navigation
     m_sd = object()
-
 
     '''
     Setup.
@@ -156,14 +166,13 @@ class vaccineChecker(object):
         
         self.read_websites()
 
-        if "Walgreens" in self.m_websites or "CVS" in self.m_websites:
+        if "Walgreens" in self.m_websites:
             DEBUG("INFO: Setting up selenium for queries requiring user navigation...")
             options = webdriver.firefox.options.Options()
             options.headless = True
             DEBUG("INFO: Creating selenium object...")
             self.m_sd = webdriver.Firefox(options=options)
             DEBUG("INFO: Done setting up selenium.")
-
    
     '''
     Read in credentials.json.
@@ -225,7 +234,7 @@ class vaccineChecker(object):
             for name, info in self.m_websites.items():
                 site = self.m_websites[name]
                 if "status" not in site:
-                    site["status"] =  "probably not"
+                    site["status"] =  Availability.PROBABLY_NOT
                 if "update_time" not in site:
                     site["update_time"] = ""
 
@@ -266,7 +275,7 @@ class vaccineChecker(object):
         self.send_message("INFO: I'm alive! (%d)" % (self.m_attempts))
 
     '''
-    Handle when a website status changes (i.e. from "probably not" to "maybe")
+    Handle when a website status changes (i.e. from Availability.PROBABLY_NOT to Availability.MAYBE)
     '''
     def handle_status(self, status, name, html):
 
@@ -274,24 +283,28 @@ class vaccineChecker(object):
         if status != site['status']:
             self.send_message("INFO: %s changed to %s" % (name, status))
 
-            # save off HTML that we make
-            archive_dir = self.m_outputDir + "/archive"
-            if (not os.path.exists(archive_dir)):
-                os.makedirs(archive_dir)
-            filename = archive_dir + "/" + name + ".html." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
-            f = open(filename, "w")
-            f.write(html)
-            f.close()
-            DEBUG("INFO: Wrote %s" % (filename))
+            # save off HTML if passed 
+            if "" != html:
+                archive_dir = self.m_outputDir + "/archive"
+                if (not os.path.exists(archive_dir)):
+                    os.makedirs(archive_dir)
+                filename = archive_dir + "/" + name + ".html." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
+                f = open(filename, "w")
+                f.write(html)
+                f.close()
+                DEBUG("INFO: Wrote %s" % (filename))
         else:
-            DEBUG("INFO: still %s" % (status))
+            DEBUG("INFO: still %s for %s" % (status, name))
 
-        site['status'] = status
+        site['status'] = status.value
 
     '''
     For querying the Walgreens page for availability.
     '''
     def query_walgreens(self):
+
+        name = "Walgreens"
+        site = self.m_websites[name]
 
         DEBUG("INFO: Requesting main page from Walgreens...")
         self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19")
@@ -302,7 +315,7 @@ class vaccineChecker(object):
         element = self.m_sd.find_element_by_id("inputLocation")
         element.clear()
 
-        q = self.m_websites['Walgreens']['query']
+        q = site['query']
         DEBUG("INFO: Asking Walgreens about the location '%s'" % (q))
         element.send_keys(q)
         button = self.m_sd.find_element_by_css_selector("button.btn")
@@ -322,62 +335,37 @@ class vaccineChecker(object):
                 time.sleep(0.5)
 
         DEBUG("INFO: Found Walgreens result '%s'" % (response.text))
-        site = self.m_websites['Walgreens']
         if "Appointments unavailable" == response.text:
-            DEBUG("INFO: Walgreens appointments are NOT available!")
-            site['status'] = "probably not"
+            self.handle_status(Availability.PROBABLY_NOT, name, "")
         elif "Please enter a valid city and state or ZIP" == response.text:
-            DEBUG("WARNING: Walgreens rejected '%s' query as invalid" % (self.m_walgreensQuery))
-            site['status'] = "probably not"
+            self.handle_status(Availability.PROBABLY_NOT, name, "")
         else:
-            DEBUG("INFO: Walgreens appointments are MAYBE available.")
-            site['status'] = "maybe"
+            self.handle_status(Availability.MAYBE, name, "")
 
     '''
     For querying the CVS page for availability.
     '''
     def query_cvs(self):
 
-        DEBUG("INFO: Requesting main page from CVS...")
-        self.m_sd.get("https://www.cvs.com/immunizations/covid-19-vaccine")
-#        btn = self.m_sd.find_element_by_css_selector('span.btn.btn__blue')
-#        btn.click()
-#        DEBUG("INFO: Requesting next page from Walgreens...")
-#        self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19/location-screening")
-#        element = self.m_sd.find_element_by_id("inputLocation")
-#        element.clear()
-#
-#        q = self.m_websites['Walgreens']['query']
-#        DEBUG("INFO: Asking Walgreens about the location '%s'" % (q))
-#        element.send_keys(q)
-#        button = self.m_sd.find_element_by_css_selector("button.btn")
-#        button.click()
-#        time.sleep(0.75)
-#
-#        timeout = time.time() + 30 # 30 sec timeout
-#        DEBUG("INFO: Waiting for Walgreens result...")
-#        response = object()
-#        while True:
-#            if (time.time() > timeout):
-#                DEBUG("WARNING: Timeout waiting for Walgreens result, continuing")
-#            try:
-#                response = self.m_sd.find_element_by_css_selector("p.fs16")
-#                break
-#            except NoSuchElementException:
-#                time.sleep(0.5)
-#
-#        DEBUG("INFO: Found Walgreens result '%s'" % (response.text))
-#        site = self.m_websites['Walgreens']
-#        if "Appointments unavailable" == response.text:
-#            DEBUG("INFO: Walgreens appointments are NOT available!")
-#            site['status'] = "probably not"
-#        elif "Please enter a valid city and state or ZIP" == response.text:
-#            DEBUG("WARNING: Walgreens rejected '%s' query as invalid" % (self.m_walgreensQuery))
-#            site['status'] = "probably not"
-#        else:
-#            DEBUG("INFO: Walgreens appointments are MAYBE available.")
-#            site['status'] = "maybe"
-#
+        DEBUG("INFO: Requesting information from CVS...")
+        name = "CVS"
+        site = self.m_websites[name]
+
+        state = site['state']
+        response = requests.get("https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.{}.json?vaccineinfo".format(state.lower()), headers={"Referer":"https://www.cvs.com/immunizations/covid-19-vaccine"})
+        payload = response.json()
+
+        DEBUG("INFO: Received response, parsing information from CVS...")
+        mappings = {}
+        for item in payload["responsePayloadData"]["data"][state]:
+            mappings[item.get('city')] = item.get('status')
+
+        response = mappings[site['city'].upper()]
+        if ("Fully Booked" == response):
+            self.handle_status(Availability.PROBABLY_NOT, name, "")
+        else:
+            self.handle_status(Availability.MAYBE, name, "")
+
 
     '''
     primary loop.  query the self.m_websites and keep track of status.
@@ -393,7 +381,7 @@ class vaccineChecker(object):
                     site = self.m_websites[name]
 
                     # catch the special cases
-                    if 'website' not in site:
+                    if 'neg_phrase' not in site:
 
                         # special cases that require website navigation
                         if ("Walgreens" == name):
@@ -402,18 +390,19 @@ class vaccineChecker(object):
                             self.query_cvs()
                         else:
                             DEBUG("WARNING: The site '%s' does not have a 'website' and is not a special case." % (name))
+
+                    # regular case of looking at a confirmation/absence of phrase in HTML
                     else:
-                        # TODO move to function?
                         DEBUG("INFO: asking %s at %s ..." % (name, info['website']))
                         r = requests.get(site['website'], timeout=self.TIMEOUT, verify=False)
                         html = re.sub("(<!--.*?-->)", "", r.text, flags=re.DOTALL) # remove HTML comments, outdated information sometimes lives here
 
                         if site['pos_phrase'] != "" and site['pos_phrase'] in html:
-                            self.handle_status("probably", name, html)
+                            self.handle_status(Availability.PROBABLY, name, html)
                         elif site['neg_phrase'] in html:
-                            self.handle_status("probably not", name, html)
+                            self.handle_status(Availability.PROBABLY_NOT, name, html)
                         else:
-                            self.handle_status("maybe", name, html)
+                            self.handle_status(Availability.MAYBE, name, html)
 
                     site['update_time'] = time.strftime("%d-%b-%Y %I:%M:%S %p")
                 except Exception as e:
