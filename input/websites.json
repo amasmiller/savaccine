@@ -18,5 +18,8 @@
         "website": "https://amasmiller.com/test.php",
         "neg_phrase": "this is a bad phrase",
         "pos_phrase": "this is a good phrase"
+    },
+    "Walgreens" : {
+        "query" : "San Antonio, TX"
     }
 }
