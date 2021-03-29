@@ -156,7 +156,7 @@ class vaccineChecker(object):
         
         self.read_websites()
 
-        if "Walgreens" in self.m_websites:
+        if "Walgreens" in self.m_websites or "CVS" in self.m_websites:
             DEBUG("INFO: Setting up selenium for queries requiring user navigation...")
             options = webdriver.firefox.options.Options()
             options.headless = True
@@ -327,12 +327,57 @@ class vaccineChecker(object):
             DEBUG("INFO: Walgreens appointments are NOT available!")
             site['status'] = "probably not"
         elif "Please enter a valid city and state or ZIP" == response.text:
-            DEBUG("WARNING: Walgreens rejectd '%s' query as invalid" % (self.m_walgreensQuery))
+            DEBUG("WARNING: Walgreens rejected '%s' query as invalid" % (self.m_walgreensQuery))
             site['status'] = "probably not"
         else:
             DEBUG("INFO: Walgreens appointments are MAYBE available.")
             site['status'] = "maybe"
 
+    '''
+    For querying the CVS page for availability.
+    '''
+    def query_cvs(self):
+
+        DEBUG("INFO: Requesting main page from CVS...")
+        self.m_sd.get("https://www.cvs.com/immunizations/covid-19-vaccine")
+#        btn = self.m_sd.find_element_by_css_selector('span.btn.btn__blue')
+#        btn.click()
+#        DEBUG("INFO: Requesting next page from Walgreens...")
+#        self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19/location-screening")
+#        element = self.m_sd.find_element_by_id("inputLocation")
+#        element.clear()
+#
+#        q = self.m_websites['Walgreens']['query']
+#        DEBUG("INFO: Asking Walgreens about the location '%s'" % (q))
+#        element.send_keys(q)
+#        button = self.m_sd.find_element_by_css_selector("button.btn")
+#        button.click()
+#        time.sleep(0.75)
+#
+#        timeout = time.time() + 30 # 30 sec timeout
+#        DEBUG("INFO: Waiting for Walgreens result...")
+#        response = object()
+#        while True:
+#            if (time.time() > timeout):
+#                DEBUG("WARNING: Timeout waiting for Walgreens result, continuing")
+#            try:
+#                response = self.m_sd.find_element_by_css_selector("p.fs16")
+#                break
+#            except NoSuchElementException:
+#                time.sleep(0.5)
+#
+#        DEBUG("INFO: Found Walgreens result '%s'" % (response.text))
+#        site = self.m_websites['Walgreens']
+#        if "Appointments unavailable" == response.text:
+#            DEBUG("INFO: Walgreens appointments are NOT available!")
+#            site['status'] = "probably not"
+#        elif "Please enter a valid city and state or ZIP" == response.text:
+#            DEBUG("WARNING: Walgreens rejected '%s' query as invalid" % (self.m_walgreensQuery))
+#            site['status'] = "probably not"
+#        else:
+#            DEBUG("INFO: Walgreens appointments are MAYBE available.")
+#            site['status'] = "maybe"
+#
 
     '''
     primary loop.  query the self.m_websites and keep track of status.
@@ -353,6 +398,8 @@ class vaccineChecker(object):
                         # special cases that require website navigation
                         if ("Walgreens" == name):
                             self.query_walgreens()
+                        elif ("CVS" == name):
+                            self.query_cvs()
                         else:
                             DEBUG("WARNING: The site '%s' does not have a 'website' and is not a special case." % (name))
                     else:

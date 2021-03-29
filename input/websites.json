@@ -21,5 +21,9 @@
     },
     "Walgreens" : {
         "query" : "San Antonio, TX"
+    },
+    "CVS" : {
+        "state" : "Texas",
+        "city" : "San Antonio, TX"
     }
 }
