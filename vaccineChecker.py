@@ -235,7 +235,7 @@ class vaccineChecker(object):
             for name, info in self.m_websites.items():
                 site = self.m_websites[name]
                 if "status" not in site:
-                    site["status"] =  Availability.PROBABLY_NOT
+                    site["status"] =  Availability.PROBABLY_NOT.value
                 if "update_time" not in site:
                     site["update_time"] = ""
 
@@ -281,7 +281,7 @@ class vaccineChecker(object):
     def handle_status(self, status, name, html):
 
         site = self.m_websites[name]
-        if status != site['status']:
+        if status.value != site['status']:
             self.send_message("INFO: %s changed to %s" % (name, status))
 
             # save off HTML if passed 
