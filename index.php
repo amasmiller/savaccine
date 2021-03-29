@@ -45,7 +45,6 @@ REQUIREMENTS:
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'UA-186062303-1');
 </script>
 
@@ -70,7 +69,7 @@ body
 {
     #button 
     {
-        font-size: 40px;
+        font-size: 30px;
         width: 95%;
     }
 
@@ -207,7 +206,7 @@ Provider sites are periodically queried to look for presence or absences of phra
 <br>
 <b>Why isn't [X] site shown?</b>
 <br>
-Updates to the site to query Walgreens and CVS are in progress.  Other than that, I may not know about provider [X].  Email me at <a href="mailto:amasmiller.com">amasmiller@gmail.com</a>.
+I may not know about provider [X].  Email me at <a href="mailto:amasmiller.com">amasmiller@gmail.com</a>.
 <br>
 <br>
 <b>Is this available in other cities?</b>

@@ -171,6 +171,7 @@ class vaccineChecker(object):
             options = webdriver.firefox.options.Options()
             options.headless = True
             DEBUG("INFO: Creating selenium object...")
+            # TODO assume Geckodriver in path
             self.m_sd = webdriver.Firefox(options=options)
             DEBUG("INFO: Done setting up selenium.")
    
