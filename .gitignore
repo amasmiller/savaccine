@@ -1,3 +1,4 @@
 input/credentials.json
 status/status.json
 status/archive/*
+geckodriver*

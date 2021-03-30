@@ -8,27 +8,26 @@ OVERVIEW:
 
     This file must be in the same directory as 'status.json' (or a symlink to it).
 
-    The webpage displays a list of boxes with the information from a status.json file.
+    The webpage displays a list of boxes with fields populated by 'vaccineChecker.py'
+    into a 'status.json' file.  This webpage cares about the 'status', 'website', and 'update_time'
+    fields.
+
     Example 'status.json':
 
-    [
+{
+    "UT Health San Antonio" : 
         {
             "status": "probably not",
-            "neg_phrase": "are full",
-            "name": "UT Health San Antonio",
             "update_time": "26-Mar-2021 10:28:39 PM",
-            "pos_phrase": "you confirm your understanding",
             "website": "https://schedule.utmedicinesa.com/Identity/Account/Register"
         },
+    "University Health" :
         {
             "status": "probably not",
-            "neg_phrase": "currently no vaccine",
-            "name": "University Health",
             "update_time": "26-Mar-2021 10:28:40 PM",
-            "pos_phrase": "A small number of",
             "website": "https://www.universityhealthsystem.com/coronavirus-covid19/vaccine/vaccine-appointments"
         }
-    ]
+}
 
 REQUIREMENTS:
 
@@ -45,7 +44,6 @@ REQUIREMENTS:
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'UA-186062303-1');
 </script>
 
@@ -57,7 +55,7 @@ REQUIREMENTS:
     border: 0.2em solid; 
     border-radius: 2em; 
     padding: 20px 20px 20px 20px;
-    margin: 18px 1px 18px 1px;
+    margin: 8px 1px 8px 1px;
 }
 
 body 
@@ -70,7 +68,7 @@ body
 {
     #button 
     {
-        font-size: 40px;
+        font-size: 30px;
         width: 95%;
     }
 
@@ -134,17 +132,15 @@ print_n("<b>$SITE_TITLE</b>");
 print_n("<br>");
 print_n("<a href=http://sanantoniovaccine.com>sanantoniovaccine.com</a>");
 print_n("<br><br>");
-print_n("Clicking the button opens the site.");
-print_n("<br><br>");
 $allurls = "";
-foreach ($items as $item)
+foreach ($items as $name => $info)
 {
-    if ($item->name == "Test Site" && !$DEBUG_TEST) { continue; }
+    if ($name == "Test Site" && !$DEBUG_TEST) { continue; }
 
-    $text = "<b>$item->name</b><br>slots " . $item->status . " available<br>as of " . $item->update_time;
+    $text = "<b>$name</b><br>slots " . $info->status . " available<br>as of " . $info->update_time;
 
     $style = "";
-    switch ($item->status)
+    switch ($info->status)
     {
         case "probably":
             $style .= "background-color: lightgreen";
@@ -160,11 +156,11 @@ foreach ($items as $item)
             break;
     }
     
-    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$item->website."', '_blank');\"/>");
+    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$info->website."', '_blank');\"/>");
     print_n("<span>$text</span>");
     print_n("</button>");
 
-    $allurls .= "window.open('".$item->website."', '_blank');";
+    $allurls .= "window.open('".$info->website."', '_blank');";
 }
 
 $text = "I'm not sure I trust this site.<br><br>Open all of them.";
@@ -209,7 +205,7 @@ Provider sites are periodically queried to look for presence or absences of phra
 <br>
 <b>Why isn't [X] site shown?</b>
 <br>
-Updates to the site to query Walgreens and CVS are in progress.  Other than that, I may not know about provider [X].  Email me at <a href="mailto:amasmiller.com">amasmiller@gmail.com</a>.
+I may not know about provider [X].  Email me at <a href="mailto:amasmiller.com">amasmiller@gmail.com</a>.
 <br>
 <br>
 <b>Is this available in other cities?</b>

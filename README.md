@@ -6,9 +6,11 @@ This project is used by https://amasmiller.com/savaccine/ to show availablity of
 
 ## How does it work?
 
-Vaccine provider websites are periodically queried to look for presence or absence of phrases like "currently no vaccine".
+Vaccine provider websites defined in `input/websites.json` are periodically queried to look for presence or absence of phrases like "currently no vaccine".
 
 `index.php` is the website, `vaccineChecker.py` is the background task for querying the websites.  See respective README information at the top `index.php` / `vaccineChecker.py`.
+
+The script `vaccineChecker.py` also supports lookup on `cvs.com` or `walgreeens.com` if "CVS" or "Walgreens" is in the site name.  See the README info at the top of `vaccineChecker.py`.
 
 ## What if I want to use it for my city?
 
@@ -19,6 +21,7 @@ You'll need to:
     * PHP (v5.5 known to work) 
     * Python (v3.4.3 known to work)
     * Python dependencies in the `import`s of `vaccineChecker.py` (a.k.a. `pip install....`)
+    * if querying Walgreens, you need `geckodriver` in the path (see https://askubuntu.com/questions/851401/where-to-find-geckodriver-needed-by-selenium-python-package)
 
 * download and extract a copy of this repository to a location NOT served by the web server.  example:
 ```
