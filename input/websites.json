@@ -9,7 +9,7 @@
         "name": "University Health",
         "website": "https://www.universityhealthsystem.com/coronavirus-covid19/vaccine/vaccine-appointments",
         "neg_phrase": "currently no vaccine",
-        "pos_phrase": "A small number of"
+        "pos_phrase": ""
     },
     {
         "name": "San Antonio Metro Health",
