@@ -93,7 +93,7 @@ PROGRAM_DESCRIPTION="""
 Handle Ctrl+C
 '''
 def SignalHandler(sig, frame):
-    DEBUG("INFO: Program interrupted via Ctrl-C.  Exiting")
+    print("INFO: Program interrupted via Ctrl-C.  Exiting")
     sys.exit(0)
 
 '''
@@ -496,7 +496,7 @@ if __name__ == "__main__":
             '--request-rate',
             action="store",
             dest="requestRate",
-            help="How often, in seconds, the status will be requested from the sites in 'websites.json'.",
+            help="How often, in seconds, the status will be requested from the sites in 'websites.json'.  Default is 300 seconds (5 minutes).",
             required=False,
             metavar='[X]',
             default=5*60)
@@ -505,7 +505,7 @@ if __name__ == "__main__":
             '--verbose',
             action="store_true",
             dest="verbose",
-            help="If passed, prints out function name and process ID when logging",
+            help="If passed, prints out function name and process ID when logging.",
             required=False,
             default=False)
     
