@@ -86,8 +86,6 @@ PROGRAM_DESCRIPTION="""
         This script was developed with Python 3.4.3 and the packages as specified
         by the import directives.
 
-        TODO urllib3, selenium version?
-
     """
 
 
@@ -169,7 +167,7 @@ class vaccineChecker(object):
             options = webdriver.firefox.options.Options()
             options.headless = True
             self.DEBUG("INFO: Creating selenium object...")
-            # TODO assume Geckodriver in path
+            # assumes 'geckodriver' binary is in path
             self.m_sd = webdriver.Firefox(options=options)
             self.DEBUG("INFO: Done setting up selenium.")
 
@@ -397,17 +395,11 @@ class vaccineChecker(object):
                 try:
                     site = self.m_websites[name]
 
-                    # catch the special cases
-                    if 'neg_phrase' not in site:
-
-                        # special cases that require website navigation
-                        if ("Walgreens" in name):
-                            self.query_walgreens(name)
-                        elif ("CVS" in name):
-                            self.query_cvs(name)
-                        else:
-                            self.DEBUG("WARNING: The site '%s' does not have a 'website' and is not a special case. Skipping site." % (name))
-
+                    # special cases that require website navigation
+                    if ("Walgreens" in name):
+                        self.query_walgreens(name)
+                    elif ("CVS" in name):
+                        self.query_cvs(name)
                     # regular case of looking at a confirmation/absence of phrase in HTML via use
                     # of 'pos_phrase' / 'neg_phrase'
                     else:
