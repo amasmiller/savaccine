@@ -21,7 +21,7 @@ You'll need to:
     * PHP (v5.5 known to work) 
     * Python (v3.4.3 known to work)
     * Python dependencies in the `import`s of `vaccineChecker.py` (a.k.a. `pip install....`)
-    * Geckodriver (see https://askubuntu.com/questions/851401/where-to-find-geckodriver-needed-by-selenium-python-package)
+    * if querying Walgreens, you need `geckodriver` in the path (see https://askubuntu.com/questions/851401/where-to-find-geckodriver-needed-by-selenium-python-package)
 
 * download and extract a copy of this repository to a location NOT served by the web server.  example:
 ```
