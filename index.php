@@ -130,6 +130,8 @@ print_n("<body>");
 print_n("<center>");
 
 print_n("<b>$SITE_TITLE</b>");
+print_n("<br>");
+print_n("<a href=http://sanantoniovaccine.com>sanantoniovaccine.com</a>");
 print_n("<br><br>");
 print_n("Clicking the button opens the site.");
 print_n("<br><br>");
@@ -217,6 +219,11 @@ Don't know.  This was homegrown for San Antonio, like an HEB tortilla.  The sour
 <b>Doesn't this spam the provider servers?</b>
 <br>
 Even if 1 million people refresh this site every second, the providers servers still only get <?php print_n(strval(60/$REFRESH_RATE)); ?> requests per hour.  The requests to provider websites are run in a throttled background task.  This site is a funnel of information, not a spambot.
+<br>
+<br>
+<b>Is this different than vaccinespotter.org?</b>
+<br>
+Similar concept, but simpler and just for San Antonio. Not affiliated with vaccinespotter.org.
 <br>
 <br>
 <b>Who made this?</b>
