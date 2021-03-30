@@ -131,6 +131,8 @@ print_n("<body>");
 print_n("<center>");
 
 print_n("<b>$SITE_TITLE</b>");
+print_n("<br>");
+print_n("<a href=http://sanantoniovaccine.com>sanantoniovaccine.com</a>");
 print_n("<br><br>");
 print_n("Clicking the button opens the site.");
 print_n("<br><br>");
