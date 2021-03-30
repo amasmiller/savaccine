@@ -64,7 +64,11 @@ PROGRAM_DESCRIPTION="""
             "pos_phrase": "yes",
         }
 
-        TODO include "Walgreens" and "CVS"
+
+    In addition to those defined in `websites.json`, this script handles special cases that 
+    require non-trivial lookup for availability.  These include:
+    * Any site with "CVS" in the name will use the "state" and "city" keys for lookup on the cvs.com website.
+    * Any site with "Walgreens" in the name will use the "query" key for lookup on the walgreens.com website.
 
     EXAMPLE USE (Command Line):
 
@@ -86,14 +90,6 @@ PROGRAM_DESCRIPTION="""
 
     """
 
-
-'''
-Utility function for logging.  Send to standard out and syslog.
-'''
-def DEBUG(x):
-    logLine = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), x)
-    sys.stdout.write(logLine)
-    syslog.syslog(logLine)
 
 '''
 Handle Ctrl+C
@@ -133,6 +129,7 @@ class vaccineChecker(object):
     m_outputDir = "" # the directory were status.json gets written to
     m_requestRate = 0 # how often, in seconds, we should ask for website status
     m_alertRate = 0 # how often, in minutes, we should send a emailed alert with script status
+    m_verbose = False # if set to true, prints out function name and process ID when logging
 
     # see input/websites.json
     m_websites = {}
@@ -143,37 +140,51 @@ class vaccineChecker(object):
     '''
     Setup.
     '''
-    def __init__(self, inputDir, outputDir, requestRate, alertRate):
+    def __init__(self, inputDir, outputDir, requestRate, alertRate, verbose):
 
-        DEBUG("INFO: Initializing....")
+        self.DEBUG("INFO: Initializing....")
 
         self.m_inputDir = inputDir
         self.m_outputDir = outputDir
         self.m_requestRate = requestRate
         self.m_alertRate = alertRate
+        self.m_verbose = verbose
 
         urllib3.disable_warnings() # for ignoring InsecureRequestWarning for https
 
         # if configured, for confirmation things are going ok, send a text/email
         if (0 != self.m_alertRate):
             self.read_credentials()
-            DEBUG("INFO: --alert-rate passed, configuring to send heartbeat message every %d minutes" % (self.m_alertRate))
+            self.DEBUG("INFO: --alert-rate passed, configuring to send heartbeat message every %d minutes" % (self.m_alertRate))
             schedule.every(self.m_alertRate).minutes.do(self.heartbeat)
         else:
-            DEBUG("INFO: --alert-rate not passed, no alerts will be sent.")
+            self.DEBUG("INFO: --alert-rate not passed, no alerts will be sent.")
 
         self.send_message("INFO: Initalization complete!")
         
         self.read_websites()
 
-        if "Walgreens" in self.m_websites:
-            DEBUG("INFO: Setting up selenium for queries requiring user navigation...")
+        if "Walgreens" in '\t'.join(self.m_websites):
+            self.DEBUG("INFO: Setting up selenium for queries requiring user navigation...")
             options = webdriver.firefox.options.Options()
             options.headless = True
-            DEBUG("INFO: Creating selenium object...")
+            self.DEBUG("INFO: Creating selenium object...")
             # TODO assume Geckodriver in path
             self.m_sd = webdriver.Firefox(options=options)
-            DEBUG("INFO: Done setting up selenium.")
+            self.DEBUG("INFO: Done setting up selenium.")
+
+
+    '''
+    Utility function for logging.  Send to standard out and syslog.
+    '''
+    def DEBUG(self, x):
+        if (self.m_verbose):
+            logLine = "[%s][%s][%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), sys._getframe(1).f_code.co_name, x)
+        else:
+            logLine = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), x)
+
+        sys.stdout.write(logLine)
+        syslog.syslog(logLine)
    
     '''
     Read in credentials.json.
@@ -191,7 +202,7 @@ class vaccineChecker(object):
 }
         '''
         if (not os.path.exists(filename)):
-            DEBUG("ERROR: " + filename + ' file not found, exiting. example file contents: ' + example)
+            self.DEBUG("ERROR: " + filename + ' file not found, exiting. example file contents: ' + example)
             sys.exit(-1)
 
         try:
@@ -204,10 +215,10 @@ class vaccineChecker(object):
             self.RECIPIENTS = c['recipients']
             self.SMTP_HOST = c['smtp_host']
             self.SMTP_PORT = c['smtp_port']
-            DEBUG("INFO: Successfully read credentials file.")
+            self.DEBUG("INFO: Successfully read credentials file.")
         except Exception as e:
-            DEBUG("ERROR: Problem reading file " + filename + '. valid example content: ' + example)
-            DEBUG(traceback.format_exc())
+            self.DEBUG("ERROR: Problem reading file " + filename + '. valid example content: ' + example)
+            self.DEBUG(traceback.format_exc())
             sys.exit(-1)
 
     '''
@@ -224,7 +235,7 @@ class vaccineChecker(object):
 }
         '''
         if (not os.path.exists(filename)):
-            DEBUG("ERROR: " + filename + ' file not found, exiting. example file contents: ' + example)
+            self.DEBUG("ERROR: " + filename + ' file not found, exiting. example file contents: ' + example)
             sys.exit(-1)
 
         try:
@@ -241,8 +252,8 @@ class vaccineChecker(object):
 
             f.close()
         except Exception as e:
-            DEBUG("ERROR: Problem reading file " + filename + '. valid example content: ' + example)
-            DEBUG(traceback.format_exc())
+            self.DEBUG("ERROR: Problem reading file " + filename + '. valid example content: ' + example)
+            self.DEBUG(traceback.format_exc())
             sys.exit(-1)
 
     '''
@@ -251,7 +262,7 @@ class vaccineChecker(object):
     '''
     def send_message(self, s):
 
-        DEBUG(s)
+        self.DEBUG(s)
         if (self.m_alertRate == 0):
             return
 
@@ -261,12 +272,12 @@ class vaccineChecker(object):
         msg['From'] = self.EMAIL
         msg['To'] = self.RECIPIENTS
 
-        DEBUG("INFO: Attempting to send email with '%s'..." % (s))
+        self.DEBUG("INFO: Attempting to send email with '%s'..." % (s))
         server = smtplib.SMTP_SSL(self.SMTP_HOST, self.SMTP_PORT)
         server.login(self.EMAIL, self.PASSWORD)
         server.sendmail(self.EMAIL, self.RECIPIENTS, str(msg))
         server.quit()
-        DEBUG("INFO: Successfully sent email!")
+        self.DEBUG("INFO: Successfully sent email!")
 
 
     '''
@@ -293,49 +304,48 @@ class vaccineChecker(object):
                 f = open(filename, "w")
                 f.write(html)
                 f.close()
-                DEBUG("INFO: Wrote %s" % (filename))
+                self.DEBUG("INFO: Wrote %s" % (filename))
         else:
-            DEBUG("INFO: still %s for %s" % (status, name))
+            self.DEBUG("INFO: still %s for %s" % (status, name))
 
         site['status'] = status.value
 
     '''
     For querying the Walgreens page for availability.
     '''
-    def query_walgreens(self):
+    def query_walgreens(self, name):
 
-        name = "Walgreens"
         site = self.m_websites[name]
 
-        DEBUG("INFO: Requesting main page from Walgreens...")
+        self.DEBUG("INFO: Requesting main page from Walgreens...")
         self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19")
         btn = self.m_sd.find_element_by_css_selector('span.btn.btn__blue')
         btn.click()
-        DEBUG("INFO: Requesting next page from Walgreens...")
+        self.DEBUG("INFO: Requesting next page from Walgreens...")
         self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19/location-screening")
         element = self.m_sd.find_element_by_id("inputLocation")
         element.clear()
 
         q = site['query']
-        DEBUG("INFO: Asking Walgreens about the location '%s'" % (q))
+        self.DEBUG("INFO: Asking Walgreens about the location '%s'" % (q))
         element.send_keys(q)
         button = self.m_sd.find_element_by_css_selector("button.btn")
         button.click()
         time.sleep(0.75)
 
         timeout = time.time() + 30 # 30 sec timeout
-        DEBUG("INFO: Waiting for Walgreens result...")
+        self.DEBUG("INFO: Waiting for Walgreens result...")
         response = object()
         while True:
             if (time.time() > timeout):
-                DEBUG("WARNING: Timeout waiting for Walgreens result, continuing")
+                self.DEBUG("WARNING: Timeout waiting for Walgreens result, continuing")
             try:
                 response = self.m_sd.find_element_by_css_selector("p.fs16")
                 break
             except NoSuchElementException:
                 time.sleep(0.5)
 
-        DEBUG("INFO: Found Walgreens result '%s'" % (response.text))
+        self.DEBUG("INFO: Found Walgreens result '%s'" % (response.text))
         if "Appointments unavailable" == response.text:
             self.handle_status(Availability.PROBABLY_NOT, name, "")
         elif "Please enter a valid city and state or ZIP" == response.text:
@@ -346,26 +356,33 @@ class vaccineChecker(object):
     '''
     For querying the CVS page for availability.
     '''
-    def query_cvs(self):
+    def query_cvs(self, name):
 
-        DEBUG("INFO: Requesting information from CVS...")
-        name = "CVS"
+        self.DEBUG("INFO: Requesting information from CVS...")
         site = self.m_websites[name]
 
         state = site['state']
+        city = site['city']
         response = requests.get("https://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.{}.json?vaccineinfo".format(state.lower()), headers={"Referer":"https://www.cvs.com/immunizations/covid-19-vaccine"})
         payload = response.json()
 
-        DEBUG("INFO: Received response, parsing information from CVS...")
+        self.DEBUG("INFO: Received response, parsing information from CVS...")
         mappings = {}
-        for item in payload["responsePayloadData"]["data"][state]:
-            mappings[item.get('city')] = item.get('status')
+        try:
+            for item in payload["responsePayloadData"]["data"][state]:
+                mappings[item.get('city')] = item.get('status')
 
-        response = mappings[site['city'].upper()]
-        if ("Fully Booked" == response):
+            response = mappings[city.upper()]
+
+            if ("Fully Booked" == response):
+                self.handle_status(Availability.PROBABLY_NOT, name, "")
+                self.DEBUG("INFO: Found 'fully booked'")
+            else:
+                self.handle_status(Availability.MAYBE, name, "")
+
+        except KeyError as e:
             self.handle_status(Availability.PROBABLY_NOT, name, "")
-        else:
-            self.handle_status(Availability.MAYBE, name, "")
+            self.DEBUG("WARNING: Could not find state '%s' or city '%s' in CVS response" % (state, city))
 
 
     '''
@@ -376,7 +393,6 @@ class vaccineChecker(object):
         # primary loop
         while self.m_attempts < self.MAX_ATTEMPTS:
 
-            # query the entries that have a 'website'/'pos_phrase'/'neg_phrase'
             for name, info in self.m_websites.items():
                 try:
                     site = self.m_websites[name]
@@ -385,16 +401,17 @@ class vaccineChecker(object):
                     if 'neg_phrase' not in site:
 
                         # special cases that require website navigation
-                        if ("Walgreens" == name):
-                            self.query_walgreens()
-                        elif ("CVS" == name):
-                            self.query_cvs()
+                        if ("Walgreens" in name):
+                            self.query_walgreens(name)
+                        elif ("CVS" in name):
+                            self.query_cvs(name)
                         else:
-                            DEBUG("WARNING: The site '%s' does not have a 'website' and is not a special case." % (name))
+                            self.DEBUG("WARNING: The site '%s' does not have a 'website' and is not a special case. Skipping site." % (name))
 
-                    # regular case of looking at a confirmation/absence of phrase in HTML
+                    # regular case of looking at a confirmation/absence of phrase in HTML via use
+                    # of 'pos_phrase' / 'neg_phrase'
                     else:
-                        DEBUG("INFO: asking %s at %s ..." % (name, info['website']))
+                        self.DEBUG("INFO: asking %s at %s ..." % (name, info['website']))
                         r = requests.get(site['website'], timeout=self.TIMEOUT, verify=False)
                         html = re.sub("(<!--.*?-->)", "", r.text, flags=re.DOTALL) # remove HTML comments, outdated information sometimes lives here
 
@@ -408,11 +425,11 @@ class vaccineChecker(object):
                     site['update_time'] = time.strftime("%d-%b-%Y %I:%M:%S %p")
                 except Exception as e:
                     if isinstance(e, requests.exceptions.Timeout):
-                        DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
+                        self.DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
                         continue
                     else:
-                        DEBUG(traceback.format_exc())
-                        self.send_message("Other Error of type %s : %s ... need assistance!" % (type(e).__name__, str(e)))
+                        self.DEBUG(traceback.format_exc())
+                        self.send_message("ERROR: Error of type %s : %s ... need assistance!" % (type(e).__name__, str(e)))
                         continue
     
             try:
@@ -434,19 +451,19 @@ class vaccineChecker(object):
                 f = open(filename, "w")
                 f.write(content)
                 f.close()
-                DEBUG("INFO: Wrote %s" % (filename))
+                self.DEBUG("INFO: Wrote %s" % (filename))
                 
                 # give the good servers some time to rest
                 VARIANCE = 10 # seconds
-                sleeptime = random.randint(max(self.MIN_REQUEST_RATE, self.m_requestRate - VARIANCE), max(self.MIN_REQUEST_RATE, self.m_requestRate + VARIANCE))
-                DEBUG("INFO: checking again in %d seconds..." % (sleeptime))
+                sleeptime = random.randint(max(self.MIN_REQUEST_RATE, self.m_requestRate - VARIANCE), self.m_requestRate + VARIANCE)
+                self.DEBUG("INFO: checking again in %d seconds..." % (sleeptime))
                 time.sleep(sleeptime)
 
                 schedule.run_pending()
                 self.m_attempts += 1
 
             except Exception as e:
-                DEBUG(traceback.format_exc())
+                self.DEBUG(traceback.format_exc())
                 self.send_message("Error during processing of type %s : %s ... exiting." % (type(e).__name__, str(e)))
                 sys.exit(-1)
 
@@ -491,23 +508,33 @@ if __name__ == "__main__":
             required=False,
             metavar='[X]',
             default=5*60)
+
+    parser.add_argument(
+            '--verbose',
+            action="store_true",
+            dest="verbose",
+            help="If passed, prints out function name and process ID when logging",
+            required=False,
+            default=False)
     
     args = parser.parse_args()
 
     try:
         args.requestRate = int(args.requestRate)
     except Exception as e:
-        DEBUG("ERROR: --request-rate must be a number")
+        print("ERROR: --request-rate must be a number")
         sys.exit(-1)
     
     if (args.alertRate != ""):
         try:
             args.alertRate = int(args.alertRate)
+            if (args.alertRate < 0):
+                raise Exception()
         except Exception as e:
-            DEBUG("ERROR: --alert-rate must be a number")
+            print("ERROR: --alert-rate must be a positive number")
             sys.exit(-1)
     else:
         args.alertRate = 0
 
-    vc = vaccineChecker(args.inputDir, args.outputDir, args.requestRate, args.alertRate)
+    vc = vaccineChecker(args.inputDir, args.outputDir, args.requestRate, args.alertRate, args.verbose)
     vc.run()

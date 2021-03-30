@@ -8,24 +8,23 @@ OVERVIEW:
 
     This file must be in the same directory as 'status.json' (or a symlink to it).
 
-    The webpage displays a list of boxes with the information from a status.json file.
+    The webpage displays a list of boxes with fields populated by 'vaccineChecker.py'
+    into a 'status.json' file.  This webpage cares about the 'status', 'website', and 'update_time'
+    fields.
+
     Example 'status.json':
 
 {
     "UT Health San Antonio" : 
         {
             "status": "probably not",
-            "neg_phrase": "are full",
             "update_time": "26-Mar-2021 10:28:39 PM",
-            "pos_phrase": "you confirm your understanding",
             "website": "https://schedule.utmedicinesa.com/Identity/Account/Register"
         },
     "University Health" :
         {
             "status": "probably not",
-            "neg_phrase": "currently no vaccine",
             "update_time": "26-Mar-2021 10:28:40 PM",
-            "pos_phrase": "A small number of",
             "website": "https://www.universityhealthsystem.com/coronavirus-covid19/vaccine/vaccine-appointments"
         }
 }
@@ -56,7 +55,7 @@ REQUIREMENTS:
     border: 0.2em solid; 
     border-radius: 2em; 
     padding: 20px 20px 20px 20px;
-    margin: 18px 1px 18px 1px;
+    margin: 8px 1px 8px 1px;
 }
 
 body 
@@ -132,8 +131,6 @@ print_n("<center>");
 print_n("<b>$SITE_TITLE</b>");
 print_n("<br>");
 print_n("<a href=http://sanantoniovaccine.com>sanantoniovaccine.com</a>");
-print_n("<br><br>");
-print_n("Clicking the button opens the site.");
 print_n("<br><br>");
 $allurls = "";
 foreach ($items as $name => $info)

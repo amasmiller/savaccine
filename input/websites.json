@@ -19,12 +19,12 @@
         "neg_phrase": "this is a bad phrase",
         "pos_phrase": "this is a good phrase"
     },
-    "CVS" : {
+    "San Antonio CVS" : {
         "website" : "https://www.cvs.com/immunizations/covid-19-vaccine",
         "state" : "TX",
         "city" : "San Antonio"
     },
-    "Walgreens" : {
+    "San Antonio Walgreens" : {
         "website" : "https://www.walgreens.com/findcare/vaccination/covid-19/location-screening",
         "query" : "San Antonio, TX"
     }
