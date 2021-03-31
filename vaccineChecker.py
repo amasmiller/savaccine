@@ -448,7 +448,7 @@ class vaccineChecker(object):
                         continue
                     else:
                         self.DEBUG(traceback.format_exc())
-                        self.send_message("ERROR: Error of type %s : %s ... need assistance!" % (type(e).__name__, str(e)))
+                        self.send_message("ERROR: Error when querying '%s'. Error type %s : %s ... need assistance!" % (name, type(e).__name__, str(e)))
                         continue
     
             try:
