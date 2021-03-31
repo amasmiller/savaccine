@@ -70,6 +70,7 @@ body
     {
         font-size: 30px;
         width: 95%;
+        margin: 4px 1px 4px 1px;
     }
 
     body 
