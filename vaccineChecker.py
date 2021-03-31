@@ -167,8 +167,10 @@ class vaccineChecker(object):
             options = webdriver.firefox.options.Options()
             options.headless = True
             self.DEBUG("INFO: Creating selenium object...")
+
             # assumes 'geckodriver' binary is in path
             self.m_sd = webdriver.Firefox(options=options)
+            self.m_sd.set_page_load_timeout(30)
             self.DEBUG("INFO: Done setting up selenium.")
 
 
@@ -382,6 +384,29 @@ class vaccineChecker(object):
             self.handle_status(Availability.PROBABLY_NOT, name, "")
             self.DEBUG("WARNING: Could not find state '%s' or city '%s' in CVS response" % (state, city))
 
+    '''
+    For querying the HEB page for availability.
+    '''
+    def query_heb(self, name):
+
+        self.DEBUG("INFO: Requesting information from HEB...")
+        site = self.m_websites[name]
+
+        d = requests.get("http://heb-ecom-covid-vaccine.hebdigital-prd.com/vaccine_locations.json").json()
+
+        self.DEBUG("INFO: Received response, parsing information from HEB...")
+        city = site['city'].upper()
+        self.handle_status(Availability.PROBABLY_NOT, name, "")
+        try:
+            for location in d['locations']:
+                if location["city"].upper() == city and location["openTimeslots"] != 0:
+                    self.DEBUG("INFO: Found a match at HEB for '%s'! Zip code: '%s'. Open timeslots: %d" % (city, location['zip'], location['openTimeslots']))
+                    self.handle_status(Availability.MAYBE, name, "")
+
+        except KeyError as e:
+            self.handle_status(Availability.PROBABLY_NOT, name, "")
+            self.DEBUG("WARNING: Could not find city '%s' in HEB response" % (city))
+
 
     '''
     primary loop.  query the self.m_websites and keep track of status.
@@ -400,6 +425,8 @@ class vaccineChecker(object):
                         self.query_walgreens(name)
                     elif ("CVS" in name):
                         self.query_cvs(name)
+                    elif ("HEB" in name):
+                        self.query_heb(name)
                     # regular case of looking at a confirmation/absence of phrase in HTML via use
                     # of 'pos_phrase' / 'neg_phrase'
                     else:
@@ -421,7 +448,7 @@ class vaccineChecker(object):
                         continue
                     else:
                         self.DEBUG(traceback.format_exc())
-                        self.send_message("ERROR: Error of type %s : %s ... need assistance!" % (type(e).__name__, str(e)))
+                        self.send_message("ERROR: Error when querying '%s'. Error type %s : %s ... need assistance!" % (name, type(e).__name__, str(e)))
                         continue
     
             try:
