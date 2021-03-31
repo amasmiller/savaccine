@@ -123,12 +123,8 @@ print_n("<meta http-equiv=\"refresh\" content=\"".(($DEBUG_FAST) ? "1" : strval(
 // read the output of vaccine-checker.py
 $STATUS_JSON = "status.json";
 if (!file_exists($STATUS_JSON)) { print_n("Sorry, the site's not working."); return; }; 
-$items = json_decode(file_get_contents($STATUS_JSON, true));
-
-# TODO fix order
-usort($items, function($a, $b) { 
-        return $a->website > $b->website ? -1 : 1; 
-});  
+$items = json_decode(file_get_contents($STATUS_JSON), true);
+ksort($items);
 
 // get the HTML party started
 print_n("<body>");
@@ -143,10 +139,11 @@ foreach ($items as $name => $info)
 {
     if ($name == "Test Site" && !$DEBUG_TEST) { continue; }
 
-    $text = "<b>$name</b><br>slots " . $info->status . " available<br>as of " . $info->update_time;
+    $text = "<b>$name</b><br>slots " . $info['status'] . " available<br>";
+    $text .= (array_key_exists('update_time', $info) && $info['update_time'] != "") ? ("as of " . $info['update_time']) : "<br>";
 
     $style = "";
-    switch ($info->status)
+    switch ($info['status'])
     {
         case "probably":
             $style .= "background-color: lightgreen";
@@ -162,11 +159,11 @@ foreach ($items as $name => $info)
             break;
     }
     
-    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$info->website."', '_blank');\"/>");
+    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$info['website']."', '_blank');\"/>");
     print_n("<span>$text</span>");
     print_n("</button>");
 
-    $allurls .= "window.open('".$info->website."', '_blank');";
+    $allurls .= "window.open('".$info['website']."', '_blank');";
 }
 
 $text = "I'm not sure I trust this site.<br><br>Open all of them.";

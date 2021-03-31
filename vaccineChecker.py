@@ -318,14 +318,16 @@ class vaccineChecker(object):
 
         site = self.m_websites[name]
 
-        # TODO fix; seems to someones not find blue button?.  keep last update time, only
-        # show N/A at beginning
-        self.DEBUG("INFO: Requesting main page from Walgreens...")
-        self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19")
+        # TODO fix; seems to someones not find blue button?
+        s = "https://www.walgreens.com/findcare/vaccination/covid-19"
+        self.DEBUG("INFO: Requesting site '%s'" % (s))
+        self.m_sd.get(s)
         btn = self.m_sd.find_element_by_css_selector('span.btn.btn__blue')
+        #btn = self.m_sd.find_element_by_xpath("//span[@class='btn btn__blue']");
         btn.click()
-        self.DEBUG("INFO: Requesting next page from Walgreens...")
-        self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19/location-screening")
+        s = "https://www.walgreens.com/findcare/vaccination/covid-19/location-screening"
+        self.DEBUG("INFO: Requesting site '%s'" % (s))
+        self.m_sd.get(s)
         element = self.m_sd.find_element_by_id("inputLocation")
         element.clear()
 
@@ -446,8 +448,6 @@ class vaccineChecker(object):
 
                     site['update_time'] = time.strftime("%d-%b-%Y %I:%M:%S %p")
                 except Exception as e:
-                    site['update_time'] = "N/A"
-                    self.handle_status(Availability.PROBABLY_NOT, name, "")
                     if isinstance(e, requests.exceptions.Timeout):
                         self.DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
                         continue
@@ -455,6 +455,7 @@ class vaccineChecker(object):
                         self.DEBUG(traceback.format_exc())
                         self.send_message("ERROR: Error when querying '%s'. Error type %s : %s ... need assistance!" % (name, type(e).__name__, str(e)))
                         continue
+                    self.handle_status(Availability.PROBABLY_NOT, name, "")
     
             try:
 
