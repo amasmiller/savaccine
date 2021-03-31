@@ -125,6 +125,11 @@ $STATUS_JSON = "status.json";
 if (!file_exists($STATUS_JSON)) { print_n("Sorry, the site's not working."); return; }; 
 $items = json_decode(file_get_contents($STATUS_JSON, true));
 
+# TODO fix order
+usort($items, function($a, $b) { 
+        return $a->website > $b->website ? -1 : 1; 
+});  
+
 // get the HTML party started
 print_n("<body>");
 print_n("<center>");

@@ -69,6 +69,7 @@ PROGRAM_DESCRIPTION="""
     require non-trivial lookup for availability.  These include:
     * Any site with "CVS" in the name will use the "state" and "city" keys for lookup on the cvs.com website.
     * Any site with "Walgreens" in the name will use the "query" key for lookup on the walgreens.com website.
+    * Any site with "HEB" in the name will use the "city" key for lookup on the heb.com website.
 
     EXAMPLE USE (Command Line):
 
@@ -293,7 +294,7 @@ class vaccineChecker(object):
 
         site = self.m_websites[name]
         if status.value != site['status']:
-            self.send_message("INFO: %s changed to %s" % (name, status))
+            self.send_message("INFO: %s changed to %s" % (site['website'], status))
 
             # save off HTML if passed 
             if "" != html:
@@ -317,6 +318,8 @@ class vaccineChecker(object):
 
         site = self.m_websites[name]
 
+        # TODO fix; seems to someones not find blue button?.  keep last update time, only
+        # show N/A at beginning
         self.DEBUG("INFO: Requesting main page from Walgreens...")
         self.m_sd.get("https://www.walgreens.com/findcare/vaccination/covid-19")
         btn = self.m_sd.find_element_by_css_selector('span.btn.btn__blue')
@@ -443,6 +446,8 @@ class vaccineChecker(object):
 
                     site['update_time'] = time.strftime("%d-%b-%Y %I:%M:%S %p")
                 except Exception as e:
+                    site['update_time'] = "N/A"
+                    self.handle_status(Availability.PROBABLY_NOT, name, "")
                     if isinstance(e, requests.exceptions.Timeout):
                         self.DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
                         continue
