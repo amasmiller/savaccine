@@ -2,7 +2,7 @@
 
 ## What is this page?
 
-This project is used by https://sanantoniovaccine.com to show availablity of the COVID-19 vaccine in San Antonio, TX.
+This project is used by http://sanantoniovaccine.com to show availablity of the COVID-19 vaccine in San Antonio, TX.
 
 ## How does it work?
 
