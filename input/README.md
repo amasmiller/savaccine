@@ -1,6 +1,6 @@
-This file should contain:
+This directory should contain:
 
-- a valid `credentials.json` file if the `--alert-rate` argument is passed to `vaccineChecker.py`.  This file should contain the authentication credentials for an SMTP server and login and email recipients for status messages to be sent to.  Example 'credentials.json' file:
+- a valid `credentials.json` file if the `--alert-rate` argument is passed to `vaccineChecker.py`.  This file should contain the authentication credentials for an SMTP server and login and email recipients for status messages to be sent to.  Example `credentials.json` file:
 ```
 {
 "email" : "foo@gmail.com",
