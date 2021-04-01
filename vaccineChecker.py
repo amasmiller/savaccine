@@ -65,8 +65,8 @@ PROGRAM_DESCRIPTION="""
         }
 
 
-    In addition to those defined in `websites.json`, this script handles special cases that 
-    require non-trivial lookup for availability.  These include:
+    Any site defined in `websites.json` with special keywords is handled in a custom way.  
+    These keywords include:
     * Any site with "CVS" in the name will use the "state" and "city" keys for lookup on the cvs.com website.
     * Any site with "Walgreens" in the name will use the "query" key for lookup on the walgreens.com website.
     * Any site with "HEB" in the name will use the "city" key for lookup on the heb.com website.
@@ -453,7 +453,7 @@ class vaccineChecker(object):
                         continue
                     else:
                         self.DEBUG(traceback.format_exc())
-                        self.send_message("ERROR: Error when querying '%s'. Error type %s : %s ... need assistance!" % (name, type(e).__name__, str(e)))
+                        self.DEBUG(("ERROR: Error when querying '%s'. Error type %s : %s ... need assistance!" % (name, type(e).__name__, str(e))))
                         continue
                     self.handle_status(Availability.PROBABLY_NOT, name, "")
     

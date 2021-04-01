@@ -10,7 +10,10 @@ Vaccine provider websites defined in `input/websites.json` are periodically quer
 
 `index.php` is the website, `vaccineChecker.py` is the background task for querying the websites.  See respective README information at the top `index.php` / `vaccineChecker.py`.
 
-The script `vaccineChecker.py` also supports lookup on `cvs.com` or `walgreeens.com` if "CVS" or "Walgreens" is in the site name.  See the README info at the top of `vaccineChecker.py`.
+The script `vaccineChecker.py` also supports lookupof:
+* `cvs.com` if "CVS" is in an entry in `input/websites.json`
+* `heb.com` if "HEB" is in an entry in `input/websites.json`
+* `walgreens.com` if "Walgreens" is in an entry in `input/websites.json`
 
 ## What if I want to use it for my city?
 
