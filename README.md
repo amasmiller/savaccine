@@ -6,12 +6,13 @@ This project is used by http://sanantoniovaccine.com to show availablity of the 
 
 ## How does it work?
 
-Vaccine provider websites in the file specified by the `--websites` argument to `vaccineChecker.py` are periodically queried to look for current vaccine availability, writing it to a `status.json` file.  This `status.json` file is read by `index.php` for display to the user.
+
+Vaccine provider websites in a configuration file are periodically queried by a Pythons cript to look for current vaccine availability.  The status is written to a file, when is then ready by a PHP file for display on a website.
 
 `index.php` is the website, `vaccineChecker.py` is the background task for querying the websites.  See respective README information at the top `index.php` / `vaccineChecker.py`, along with `vaccineChecker.py --help`.
 
 An example file `input/websites.json` is provided in this source tree.  The sites in `websites.json` can be one of four `type` values:
-* `phrase' : Looks for the presence or absence of phrases specified by `pos_phrase` or `neg_phrase`.
+* `phrase` : Looks for the presence or absence of phrases specified by `pos_phrase` or `neg_phrase`.
 * `cvs`: Queries the `cvs.com` website with with the `state` and `city` parameters supplied.
 * `heb`: Queries the `heb.com` website with with the `query` parameter supplied.
 * `walgreens`: Queries the `walgreens.com` website with with the `query` parameter supplied.
