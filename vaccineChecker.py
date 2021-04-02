@@ -323,7 +323,6 @@ class vaccineChecker(object):
     '''
     For querying the Walgreens page for availability.  Requires 'selenium' to be installed.
     '''
-    # TODO test lack of selenium
     def query_walgreens(self, name):
         from selenium.common.exceptions import NoSuchElementException
 
@@ -333,7 +332,6 @@ class vaccineChecker(object):
         self.DEBUG("INFO: Requesting site '%s'" % (s))
         self.m_sd.get(s)
         btn = self.m_sd.find_element_by_css_selector('span.btn.btn__blue')
-        #btn = self.m_sd.find_element_by_xpath("//span[@class='btn btn__blue']");
         btn.click()
         s = "https://www.walgreens.com/findcare/vaccination/covid-19/location-screening"
         self.DEBUG("INFO: Requesting site '%s'" % (s))
@@ -465,7 +463,6 @@ class vaccineChecker(object):
                         self.DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
                         continue
                     else:
-                        # TODO test what happens when status old
                         self.DEBUG(traceback.format_exc())
                         self.DEBUG(("ERROR: Error when querying '%s'. Error type %s : %s" % (name, type(e).__name__, str(e))))
                         continue
@@ -478,8 +475,8 @@ class vaccineChecker(object):
                 if (not os.path.exists(self.m_outputDir)):
                     os.makedirs(self.m_outputDir)
                 STATUS_JSON_FILENAME = "status.json" 
-                content = json.dumps(self.m_websites, indent=4)
                 filename = self.m_outputDir + "/" + STATUS_JSON_FILENAME
+                content = json.dumps(self.m_websites, indent=4)
                 f = open(filename, "w")
                 f.write(content)
                 f.close()
@@ -523,7 +520,7 @@ if __name__ == "__main__":
             '--websites',
             action="store",
             dest="websitesFile",
-            help="The location of 'websites.json`.  See README.md for format.",
+            help="The location of 'websites.json`.  See README at the top of vaccineChecker.py for format.",
             required=True,
             default="input/websites.json")
 
@@ -539,7 +536,7 @@ if __name__ == "__main__":
             '--credentials',
             action="store",
             dest="credentialsFile",
-            help="The location of 'credentials.json`.  See README.md for format.",
+            help="The location of 'credentials.json`.  See README at the top of vaccineChecker.py for format.",
             required=False,
             default="")
 
@@ -547,7 +544,7 @@ if __name__ == "__main__":
             '--notification-rate',
             action="store",
             dest="notificationRate",
-            help="If passed, defines how often, in minutes, the program will email the 'recipients' field in 'credentials.json' to send a periodic update of status and/or errors.  If not passed, 'credentials.json' is not required.",
+            help="If passed, defines how often, in minutes, the program will email the 'recipients' field in 'credentials.json' to send a periodic update of status and/or errors.",
             required=False,
             default="")
 
@@ -587,7 +584,7 @@ if __name__ == "__main__":
         print("INFO: 'credentials.json' location specified, but --notification-rate not passed.  Assuming default notification rate of 60 minutes.")
         args.notificationRate = "60"
 
-    if ("" != args.notificationRate and ""== args.credentialsFile):
+    if ("" != args.notificationRate and "" == args.credentialsFile):
         print("ERROR: --credentials file location must be passed when --notification-rate is supplied")
         sys.exit(-1)
     
