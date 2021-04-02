@@ -27,32 +27,19 @@ PROGRAM_DESCRIPTION="""
     README:
 
     This program is a daemon for inspecting vaccine provider websites and outputting
-    their status to an output `status.json` file.
+    their availability status to an output `status.json` file.
 
-    This program always expects a valid 'websites.json' file in the directory
-    specified by --input-dir.  This file defines the websites to query, along with 
-    the positive/negative phrases to search for.  Example 'websites.json' file:
+    This program always expects a valid 'websites.json' file passed as the 
+    --websites argument. This file defines the websites to query.
 
-    {
-        "UT Health San Antonio": {
-            "type" : "phrase",
-            "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
-            "neg_phrase": "are full",
-            "pos_phrase": "you confirm your understanding"
-        },
-        "San Antonio CVS" : {
-            "type" : "cvs",
-            "website" : "https://www.cvs.com/immunizations/covid-19-vaccine",
-            "state" : "TX",
-            "city" : "San Antonio"
-        },
-        "San Antonio Walgreens" : {
-            "type" : "walgreens",
-            "website" : "https://www.walgreens.com/findcare/vaccination/covid-19/location-screening",
-            "query" : "San Antonio, TX"
-        }
-    }
-    
+    An example file `input/websites.json` is provided in this source tree.  
+    The sites in `websites.json` can be one of four `type` values:
+
+    * `phrase` : Looks for the presence or absence of phrases specified by `pos_phrase` or `neg_phrase`.
+    * `cvs`: Queries the `cvs.com` website with with the `state` and `city` parameters supplied.
+    * `heb`: Queries the `heb.com` website with with the `query` parameter supplied.
+    * `walgreens`: Queries the `walgreens.com` website with with the `query` parameter supplied.
+
     If the argument --notification-rate is passed, this program expects a 
     valid 'credentials.json' file specified by the --credentials argument.
     This file should contain the authentication credentials for an SMTP server 
