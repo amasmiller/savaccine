@@ -223,7 +223,7 @@ Even if 1 million people refresh this site every second, the providers servers s
 <br>
 <b>Is this different than vaccinespotter.org?</b>
 <br>
-Similar concept, but simpler and just for San Antonio. Not affiliated with vaccinespotter.org.
+Similar concept, but simpler and just for San Antonio. Not affiliated with <a href="http://vaccinespotter.org">vaccinespotter.org</a>.
 <br>
 <br>
 <b>Who made this?</b>
