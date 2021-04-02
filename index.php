@@ -158,12 +158,17 @@ foreach ($items as $name => $info)
             $style .= "background-color: gray";
             break;
     }
-    
-    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$info['website']."', '_blank');\"/>");
+
+    // special case
+    $website = "";
+    if (array_key_exists('display_website', $info)) { $website = $info['display_website']; } 
+    else { $website = $info['website']; }
+
+    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$website."', '_blank');\"/>");
     print_n("<span>$text</span>");
     print_n("</button>");
 
-    $allurls .= "window.open('".$info['website']."', '_blank');";
+    $allurls .= "window.open('".$website."', '_blank');";
 }
 
 $text = "I'm not sure I trust this site.<br><br>Open all of them.";
