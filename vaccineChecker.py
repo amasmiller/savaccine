@@ -522,6 +522,7 @@ if __name__ == "__main__":
             dest="websitesFile",
             help="The location of 'websites.json`.  See README at the top of vaccineChecker.py for format.",
             required=True,
+            metavar="[x]",
             default="input/websites.json")
 
     parser.add_argument(
@@ -530,6 +531,7 @@ if __name__ == "__main__":
             dest="outputDir",
             help="The directory where 'status.json', which is read by 'index.php', will be written to. If --archive is passed, archives of of status will be written in an 'archive' subdirectory.  Default directory is 'status'.",
             required=False,
+            metavar="[x]",
             default="status")
 
     parser.add_argument(
@@ -538,6 +540,7 @@ if __name__ == "__main__":
             dest="credentialsFile",
             help="The location of 'credentials.json`.  See README at the top of vaccineChecker.py for format.",
             required=False,
+            metavar="[x]",
             default="")
 
     parser.add_argument(
@@ -546,6 +549,7 @@ if __name__ == "__main__":
             dest="notificationRate",
             help="If passed, defines how often, in minutes, the program will email the 'recipients' field in 'credentials.json' to send a periodic update of status and/or errors.",
             required=False,
+            metavar="[x]",
             default="")
 
     parser.add_argument(
@@ -562,6 +566,7 @@ if __name__ == "__main__":
             dest="requestRate",
             help="How often, in seconds, the status will be requested from the sites in 'websites.json'.  Default is 300 seconds (5 minutes).  Up to a 10 second jitter is intentionally added every request.",
             required=False,
+            metavar="[x]",
             default=5*60)
 
     parser.add_argument(
