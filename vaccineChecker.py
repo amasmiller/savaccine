@@ -6,6 +6,7 @@ import traceback
 import requests
 import signal
 import argparse
+import inspect
 import os
 import time
 import smtplib
@@ -179,7 +180,8 @@ class vaccineChecker(object):
     '''
     def DEBUG(self, x):
         if (self.m_verbose):
-            logLine = "[%s][%s][%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), sys._getframe(1).f_code.co_name, x)
+            frame,filename,line_number,function_name,lines,index = inspect.stack()[1] 
+            logLine = "[%s][%s|%s|%s|%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), filename, function_name, line_number, x)
         else:
             logLine = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), x)
 
@@ -273,7 +275,8 @@ class vaccineChecker(object):
             return
 
         if (self.m_verbose):
-            m = "[%s][%s][%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), sys._getframe(1).f_code.co_name, s)
+            frame,filename,line_number,function_name,lines,index = inspect.stack()[1] 
+            m = "[%s][%s|%s|%s|%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), filename, function_name, line_number, s)
         else:
             m = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), s)
 
