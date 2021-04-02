@@ -26,7 +26,8 @@ PROGRAM_DESCRIPTION="""
     
     README:
 
-    This program is a daemon for inspecting vaccine provider websites.
+    This program is a daemon for inspecting vaccine provider websites and outputting
+    their status to an output `status.json` file.
 
     This program always expects a valid 'websites.json' file in the directory
     specified by --input-dir.  This file defines the websites to query, along with 
