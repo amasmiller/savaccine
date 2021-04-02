@@ -15,15 +15,12 @@ import urllib3
 import syslog
 import json
 import re
-import selenium
 import urllib3
 from datetime import datetime
 from email.mime.text import MIMEText
 
 # non-standard libraries
 import schedule 
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
 
 PROGRAM_DESCRIPTION="""
     
@@ -120,17 +117,21 @@ class vaccineChecker(object):
     ##############################################
 
     MIN_REQUEST_RATE = 5 # seconds
-    MAX_ATTEMPTS = 10000 # maximum runs of main while loop
+    MAX_ATTEMPTS = 0 # maximum runs of main while loop. 0 = run forever.
     TIMEOUT = 10 # website access timeout (seconds)
 
-    m_attempts = 0
-    m_inputDir = "" # location of credentials.json, websites.json, FAQ.md
+    m_attempts = 0 # total runs of main while loop
+
+    # command line arguments
+    m_websitesFile = "" # location of 'websites.json'
     m_outputDir = "" # the directory were status.json gets written to
+    m_credentialsFile = "" # location of 'credentials.json'
+    m_notificationRate = 0 # how often, in minutes, we should send a emailed notification with script status
+    m_enableArchive = False # whether or not files should be written as archives in m_outputDir
     m_requestRate = 0 # how often, in seconds, we should ask for website status
-    m_alertRate = 0 # how often, in minutes, we should send a emailed alert with script status
     m_verbose = False # if set to true, prints out function name and process ID when logging
 
-    # see input/websites.json
+    # initially populated with 'websites.json', but then updated continuously
     m_websites = {}
 
     # selenium object for accessing sites that require special navigation
@@ -139,40 +140,49 @@ class vaccineChecker(object):
     '''
     Setup.
     '''
-    def __init__(self, inputDir, outputDir, requestRate, alertRate, verbose):
+    def __init__(self, websitesFile, outputDir, credentialsFile, notificationRate, enableArchive, requestRate, verbose):
 
         self.DEBUG("INFO: Initializing....")
 
-        self.m_inputDir = inputDir
+        self.m_websitesFile = websitesFile
         self.m_outputDir = outputDir
+        self.m_credentialsFile = credentialsFile
+        self.m_notificationRate = notificationRate
+        self.m_enableArchive = enableArchive
         self.m_requestRate = requestRate
-        self.m_alertRate = alertRate
         self.m_verbose = verbose
 
         urllib3.disable_warnings() # for ignoring InsecureRequestWarning for https
 
         # if configured, for confirmation things are going ok, send a text/email
-        if (0 != self.m_alertRate):
+        if (0 != self.m_notificationRate):
             self.read_credentials()
-            self.DEBUG("INFO: --alert-rate passed, configuring to send heartbeat message every %d minutes" % (self.m_alertRate))
-            schedule.every(self.m_alertRate).minutes.do(self.heartbeat)
+            self.DEBUG("INFO: --notification-rate passed, configuring to send heartbeat message every %d minutes" % (self.m_notificationRate))
+            schedule.every(self.m_notificationRate).minutes.do(self.heartbeat)
         else:
-            self.DEBUG("INFO: --alert-rate not passed, no alerts will be sent.")
+            self.DEBUG("INFO: --notification-rate not passed, no notifications will be sent.")
 
-        self.send_message("INFO: Initalization complete!")
+        self.send_message("INFO: Startup. m_attempts = %d." % (self.m_attempts))
         
         self.read_websites()
-        
-        if "Walgreens" in '\t'.join(self.m_websites):
-            self.DEBUG("INFO: Setting up selenium for queries requiring user navigation...")
-            options = webdriver.firefox.options.Options()
-            options.headless = True
-            self.DEBUG("INFO: Creating selenium object...")
 
-            # assumes 'geckodriver' binary is in path
-            self.m_sd = webdriver.Firefox(options=options)
-            self.m_sd.set_page_load_timeout(30)
-            self.DEBUG("INFO: Done setting up selenium.")
+        # check for selenium
+        for name, info in self.m_websites.items():
+            site = self.m_websites[name]
+            
+            # currently only Walgreens requires 
+            if "walgreens" == site['type'].lower():
+                self.DEBUG("INFO: Setting up Python package 'selenium' for queries requiring user navigation (i.e  Walgreens)...")
+
+                from selenium import webdriver
+                options = webdriver.firefox.options.Options()
+                options.headless = True
+                self.DEBUG("INFO: Creating selenium object...")
+
+                # assumes 'geckodriver' binary is in path
+                self.m_sd = webdriver.Firefox(options=options)
+                self.m_sd.set_page_load_timeout(30)
+                self.DEBUG("INFO: Done setting up selenium.")
 
 
     '''
@@ -192,7 +202,7 @@ class vaccineChecker(object):
     '''
     def read_credentials(self):
 
-        filename = self.m_inputDir + "/credentials.json"
+        filename = self.m_credentialsFile
         example = ''' 
 {
 "email" : "foo@gmail.com",
@@ -226,10 +236,12 @@ class vaccineChecker(object):
     Read in websites.json.
     '''
     def read_websites(self):
-        filename = self.m_inputDir + "/websites.json"
+
+        filename = self.m_websitesFile
         example = ''' 
 {
     "name": "UT Health San Antonio",
+    "type" : "phrase",
     "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
     "neg_phrase": "are full",
     "pos_phrase": "you confirm your understanding",
@@ -246,6 +258,9 @@ class vaccineChecker(object):
             # initialize things the user doesn't supply
             for name, info in self.m_websites.items():
                 site = self.m_websites[name]
+                if "type" not in site:
+                    self.DEBUG("ERROR: Each site in 'websites.json' must have a 'type'.  See README.md")
+                    sys.exit(-1)
                 if "status" not in site:
                     site["status"] =  Availability.PROBABLY_NOT.value
                 if "update_time" not in site:
@@ -258,18 +273,23 @@ class vaccineChecker(object):
             sys.exit(-1)
 
     '''
-    Given a string, logs it.  If alerts are enabled, it sends an email to RECIPIENTS,
+    Given a string, logs it.  If notifications are enabled, it sends an email to RECIPIENTS,
     using the credentials in EMAIL and PASSWORD.
     '''
     def send_message(self, s):
 
         self.DEBUG(s)
-        if (self.m_alertRate == 0):
+
+        if (self.m_notificationRate == 0):
             return
 
-        msg = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), s)
-        msg = MIMEText(msg)
-        msg['Subject'] = 'Vaccine Checker Script'
+        if (self.m_verbose):
+            m = "[%s][%s][%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), sys._getframe(1).f_code.co_name, s)
+        else:
+            m = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), s)
+
+        msg = MIMEText(m)
+        msg['Subject'] = os.path.basename(__file__)
         msg['From'] = self.EMAIL
         msg['To'] = (', ').join(self.RECIPIENTS.split(','))
 
@@ -285,7 +305,7 @@ class vaccineChecker(object):
     Utility function to let someone know the script is running a-ok.
     '''
     def heartbeat(self):
-        self.send_message("INFO: I'm alive! (%d)" % (self.m_attempts))
+        self.send_message("INFO: Heartbeat. m_attempts = '%d'." % (self.m_attempts))
 
     '''
     Handle when a website status changes (i.e. from Availability.PROBABLY_NOT to Availability.MAYBE)
@@ -297,7 +317,7 @@ class vaccineChecker(object):
             self.send_message("INFO: %s changed to %s" % (site['website'], status))
 
             # save off HTML if passed 
-            if "" != html:
+            if "" != html and self.m_enableArchive:
                 archive_dir = self.m_outputDir + "/archive"
                 if (not os.path.exists(archive_dir)):
                     os.makedirs(archive_dir)
@@ -305,20 +325,21 @@ class vaccineChecker(object):
                 f = open(filename, "w")
                 f.write(html)
                 f.close()
-                self.DEBUG("INFO: Wrote %s" % (filename))
+                self.DEBUG("INFO: Archiving file '%s'" % (filename))
         else:
             self.DEBUG("INFO: still %s for %s" % (status, name))
 
         site['status'] = status.value
 
     '''
-    For querying the Walgreens page for availability.
+    For querying the Walgreens page for availability.  Requires 'selenium' to be installed.
     '''
+    # TODO test lack of selenium
     def query_walgreens(self, name):
+        from selenium.common.exceptions import NoSuchElementException
 
         site = self.m_websites[name]
 
-        # TODO fix; seems to someones not find blue button?
         s = "https://www.walgreens.com/findcare/vaccination/covid-19"
         self.DEBUG("INFO: Requesting site '%s'" % (s))
         self.m_sd.get(s)
@@ -419,22 +440,22 @@ class vaccineChecker(object):
     def run(self):
 
         # primary loop
-        while self.m_attempts < self.MAX_ATTEMPTS:
+        while self.m_attempts < self.MAX_ATTEMPTS or self.MAX_ATTEMPTS == 0:
 
             for name, info in self.m_websites.items():
                 try:
                     site = self.m_websites[name]
 
                     # special cases that require website navigation
-                    if ("Walgreens" in name):
+                    if ("walgreens" == site['type'].lower()):
                         self.query_walgreens(name)
-                    elif ("CVS" in name):
+                    elif ("cvs" == site['type'].lower()):
                         self.query_cvs(name)
-                    elif ("HEB" in name):
+                    elif ("heb"  == site['type'].lower()):
                         self.query_heb(name)
                     # regular case of looking at a confirmation/absence of phrase in HTML via use
                     # of 'pos_phrase' / 'neg_phrase'
-                    else:
+                    elif ("phrase" == site['type'].lower()):
                         self.DEBUG("INFO: asking %s at %s ..." % (name, info['website']))
                         r = requests.get(site['website'], timeout=self.TIMEOUT, verify=False)
                         html = re.sub("(<!--.*?-->)", "", r.text, flags=re.DOTALL) # remove HTML comments, outdated information sometimes lives here
@@ -445,6 +466,9 @@ class vaccineChecker(object):
                             self.handle_status(Availability.PROBABLY_NOT, name, html)
                         else:
                             self.handle_status(Availability.MAYBE, name, html)
+                    else:
+                        self.DEBUG("WARNING: Type '%s' for website '%s' not found, skipping..." % (site['type'], site['website']))
+                        continue
 
                     site['update_time'] = time.strftime("%d-%b-%Y %I:%M:%S %p")
                 except Exception as e:
@@ -452,9 +476,11 @@ class vaccineChecker(object):
                         self.DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
                         continue
                     else:
+                        # TODO test what happens when status old
                         self.DEBUG(traceback.format_exc())
-                        self.DEBUG(("ERROR: Error when querying '%s'. Error type %s : %s ... need assistance!" % (name, type(e).__name__, str(e))))
+                        self.DEBUG(("ERROR: Error when querying '%s'. Error type %s : %s" % (name, type(e).__name__, str(e))))
                         continue
+
                     self.handle_status(Availability.PROBABLY_NOT, name, "")
     
             try:
@@ -464,19 +490,22 @@ class vaccineChecker(object):
                     os.makedirs(self.m_outputDir)
                 STATUS_JSON_FILENAME = "status.json" 
                 content = json.dumps(self.m_websites, indent=4)
-                f = open(self.m_outputDir + "/" + STATUS_JSON_FILENAME, "w")
-                f.write(content)
-                f.close()
-
-                # save off all that we make
-                archive_dir = self.m_outputDir + "/archive"
-                if (not os.path.exists(archive_dir)):
-                    os.makedirs(archive_dir)
-                filename = archive_dir + "/" + STATUS_JSON_FILENAME + "." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
+                filename = self.m_outputDir + "/" + STATUS_JSON_FILENAME
                 f = open(filename, "w")
                 f.write(content)
                 f.close()
-                self.DEBUG("INFO: Wrote %s" % (filename))
+                self.DEBUG("INFO: Wrote '%s'" % (filename))
+
+                # save off all that we make
+                if self.m_enableArchive:
+                    archive_dir = self.m_outputDir + "/archive"
+                    if (not os.path.exists(archive_dir)):
+                        os.makedirs(archive_dir)
+                    filename = archive_dir + "/" + STATUS_JSON_FILENAME + "." + (datetime.now().strftime("%Y-%m-%d_%H%M%S"))
+                    f = open(filename, "w")
+                    f.write(content)
+                    f.close()
+                    self.DEBUG("INFO: Archiving file %s" % (filename))
                 
                 # give the good servers some time to rest
                 VARIANCE = 10 # seconds
@@ -491,6 +520,9 @@ class vaccineChecker(object):
                 self.DEBUG(traceback.format_exc())
                 self.send_message("Error during processing of type %s : %s ... exiting." % (type(e).__name__, str(e)))
                 sys.exit(-1)
+        
+        self.DEBUG("INFO: All done.  Bye!")
+
 
 if __name__ == "__main__":
 
@@ -499,39 +531,51 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=PROGRAM_DESCRIPTION, formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument(
-            '--alert-rate',
+            '--websites',
             action="store",
-            dest="alertRate",
-            help="If passed, defines how often, in minutes, the program will email the 'recipients' field in 'credentials.json' to send a periodic update of status and/or errors.  If not passed, 'credentials.json' is not required.",
-            required=False,
-            metavar='[X]',
-            default="")
-
-    parser.add_argument(
-            '--input-dir',
-            action="store",
-            dest="inputDir",
-            help="The directory where 'credentials.json' and 'websites.json' will be read from.  Default directory is 'input'.",
-            required=False,
-            metavar='[X]',
-            default="input")
+            dest="websitesFile",
+            help="The location of 'websites.json`.  See README.md for format.",
+            required=True,
+            default="input/websites.json")
 
     parser.add_argument(
             '--output-dir',
             action="store",
             dest="outputDir",
-            help="The directory where 'status.json' and the archives of it will be written to.  Default directory is 'status'.",
+            help="The directory where 'status.json', which is read by 'index.php', will be written to. If --archive is passed, archives of of status will be written in an 'archive' subdirectory.  Default directory is 'status'.",
             required=False,
-            metavar='[X]',
             default="status")
+
+    parser.add_argument(
+            '--credentials',
+            action="store",
+            dest="credentialsFile",
+            help="The location of 'credentials.json`.  See README.md for format.",
+            required=False,
+            default="")
+
+    parser.add_argument(
+            '--notification-rate',
+            action="store",
+            dest="notificationRate",
+            help="If passed, defines how often, in minutes, the program will email the 'recipients' field in 'credentials.json' to send a periodic update of status and/or errors.  If not passed, 'credentials.json' is not required.",
+            required=False,
+            default="")
+
+    parser.add_argument(
+            '--archive',
+            action="store_true",
+            dest="enableArchive",
+            help="If enabled, will write archives of 'status.json' and changed website HTML content to the directory specified in --output-dir",
+            required=False,
+            default=False)
 
     parser.add_argument(
             '--request-rate',
             action="store",
             dest="requestRate",
-            help="How often, in seconds, the status will be requested from the sites in 'websites.json'.  Default is 300 seconds (5 minutes).",
+            help="How often, in seconds, the status will be requested from the sites in 'websites.json'.  Default is 300 seconds (5 minutes).  Up to a 10 second jitter is intentionally added every request.",
             required=False,
-            metavar='[X]',
             default=5*60)
 
     parser.add_argument(
@@ -549,17 +593,25 @@ if __name__ == "__main__":
     except Exception as e:
         print("ERROR: --request-rate must be a number")
         sys.exit(-1)
+
+    if ("" != args.credentialsFile and "" == args.notificationRate):
+        print("INFO: 'credentials.json' location specified, but --notification-rate not passed.  Assuming default notification rate of 60 minutes.")
+        args.notificationRate = "60"
+
+    if ("" != args.notificationRate and ""== args.credentialsFile):
+        print("ERROR: --credentials file location must be passed when --notification-rate is supplied")
+        sys.exit(-1)
     
-    if (args.alertRate != ""):
+    if (args.notificationRate != ""):
         try:
-            args.alertRate = int(args.alertRate)
-            if (args.alertRate < 0):
+            args.notificationRate = int(args.notificationRate)
+            if (args.notificationRate < 0):
                 raise Exception()
         except Exception as e:
-            print("ERROR: --alert-rate must be a positive number")
+            print("ERROR: --notification-rate must be a positive number")
             sys.exit(-1)
     else:
-        args.alertRate = 0
+        args.notificationRate = 0
 
-    vc = vaccineChecker(args.inputDir, args.outputDir, args.requestRate, args.alertRate, args.verbose)
+    vc = vaccineChecker(args.websitesFile, args.outputDir, args.credentialsFile, args.notificationRate, args.enableArchive, args.requestRate, args.verbose)
     vc.run()
