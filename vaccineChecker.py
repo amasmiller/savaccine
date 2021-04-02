@@ -162,7 +162,7 @@ class vaccineChecker(object):
         self.send_message("INFO: Initalization complete!")
         
         self.read_websites()
-
+        
         if "Walgreens" in '\t'.join(self.m_websites):
             self.DEBUG("INFO: Setting up selenium for queries requiring user navigation...")
             options = webdriver.firefox.options.Options()
@@ -271,14 +271,14 @@ class vaccineChecker(object):
         msg = MIMEText(msg)
         msg['Subject'] = 'Vaccine Checker Script'
         msg['From'] = self.EMAIL
-        msg['To'] = self.RECIPIENTS
+        msg['To'] = (', ').join(self.RECIPIENTS.split(','))
 
         self.DEBUG("INFO: Attempting to send email with '%s'..." % (s))
         server = smtplib.SMTP_SSL(self.SMTP_HOST, self.SMTP_PORT)
         server.login(self.EMAIL, self.PASSWORD)
-        server.sendmail(self.EMAIL, self.RECIPIENTS, str(msg))
+        server.sendmail(self.EMAIL, self.RECIPIENTS.split(','), str(msg))
         server.quit()
-        self.DEBUG("INFO: Successfully sent email!")
+        self.DEBUG("INFO: Successfully sent email to '%s'!" % self.RECIPIENTS)
 
 
     '''
