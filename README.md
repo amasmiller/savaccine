@@ -6,14 +6,15 @@ This project is used by http://sanantoniovaccine.com to show availablity of the 
 
 ## How does it work?
 
-Vaccine provider websites defined in `input/websites.json` are periodically queried to look for presence or absence of phrases like "currently no vaccine".
+Vaccine provider websites in the file specified by the `--websites` argument to `vaccineChecker.py` are periodically queried to look for current vaccine availability, writing it to a `status.json` file.  This `status.json` file is read by `index.php` for display to the user.
 
-`index.php` is the website, `vaccineChecker.py` is the background task for querying the websites.  See respective README information at the top `index.php` / `vaccineChecker.py`.
+`index.php` is the website, `vaccineChecker.py` is the background task for querying the websites.  See respective README information at the top `index.php` / `vaccineChecker.py`, along with `vaccineChecker.py --help`.
 
-In addition to the sites defined manualy in `websites.json`, the script `vaccineChecker.py` also supports lookup of:
-* `cvs.com` if "CVS" is in an entry in `input/websites.json`
-* `heb.com` if "HEB" is in an entry in `input/websites.json`
-* `walgreens.com` if "Walgreens" is in an entry in `input/websites.json`
+An example file `input/websites.json` is provided in this source tree.  The sites in `websites.json` can be one of four `type` values:
+* `phrase' : Looks for the presence or absence of phrases specified by `pos_phrase` or `neg_phrase`.
+* `cvs`: Queries the `cvs.com` website with with the `state` and `city` parameters supplied.
+* `heb`: Queries the `heb.com` website with with the `query` parameter supplied.
+* `walgreens`: Queries the `walgreens.com` website with with the `query` parameter supplied.
 
 ## What if I want to use it for my city?
 
@@ -24,7 +25,7 @@ You'll need to:
     * PHP (v5.5 known to work) 
     * Python (v3.4.3 known to work)
     * Python dependencies in the `import`s of `vaccineChecker.py` (a.k.a. `pip install....`)
-    * if querying Walgreens, you need `geckodriver` in the path (see https://askubuntu.com/questions/851401/where-to-find-geckodriver-needed-by-selenium-python-package)
+    * if querying Walgreens, you need the `selenium` python package and the Firefox selenium driver for the OS.  The script assumes `geckodriver` in the path. See https://askubuntu.com/questions/851401/where-to-find-geckodriver-needed-by-selenium-python-package for setup.
 
 * download and extract a copy of this repository to a location NOT served by the web server.  example:
 ```
@@ -37,9 +38,8 @@ You'll need to:
   input/
     websites.json
 ```  
-
 * in the extracted directory:
-  * if you would like alerts with script status to be sent, as enabled by the `--alert-rate` argument, create your own `input/credentials.json` (see top of `vaccineChecker.py` for format)
+  * if you would like notifications to an email with script status to be sent, as enabled by the `--notification-rate` argument, create your own `credentials.json` file and pass it to the script with `--credentials`. See README in `vaccineChecker.py` for format.
   * modify `input/websites.json` for the websites you wish to monitor
   * run `vaccineChecker.py` as a background task
 

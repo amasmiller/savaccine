@@ -1,4 +1,4 @@
-This directory should contain:
+This directory can contain:
 
 - a valid `credentials.json` file if the `--alert-rate` argument is passed to `vaccineChecker.py`.  This file should contain the authentication credentials for an SMTP server and login and email recipients for status messages to be sent to.  Example `credentials.json` file:
 ```
@@ -11,22 +11,26 @@ This directory should contain:
 }
 ````
 
-- a valid `websites.json` file.   This file defines the websites to query, along with the positive/negative phrases to search for.  Example 'websites.json' file:
+- a valid `websites.json` file.   This file defines the websites to query.  Example:
 
 ```
-"UT Health San Antonio" : {
-    "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
-    "neg_phrase": "are full",
-    "pos_phrase": "you confirm your understanding"
-},
-"Test Site" : {
-    "website": "http://mytestsite.com/mydirectory",
-    "neg_phrase": "no",
-    "pos_phrase": "yes",
+{
+    "UT Health San Antonio": {
+        "type" : "phrase",
+        "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
+        "neg_phrase": "are full",
+        "pos_phrase": "you confirm your understanding"
+    },
+    "San Antonio CVS" : {
+        "type" : "cvs",
+        "website" : "https://www.cvs.com/immunizations/covid-19-vaccine",
+        "state" : "TX",
+        "city" : "San Antonio"
+    },
+    "San Antonio Walgreens" : {
+        "type" : "walgreens",
+        "website" : "https://www.walgreens.com/findcare/vaccination/covid-19/location-screening",
+        "query" : "San Antonio, TX"
+    }
 }
 ```
-
-- Any site defined in `websites.json` with special keywords is handled in a custom way.  These keywords include:
-    * Any site with "CVS" in the name will use the "state" and "city" keys for lookup on the cvs.com website.
-    * Any site with "Walgreens" in the name will use the "query" key for lookup on the walgreens.com website.
-    * Any site with "HEB" in the name will use the "city" key for lookup on the heb.com website.

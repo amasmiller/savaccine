@@ -24,60 +24,61 @@ import schedule
 
 PROGRAM_DESCRIPTION="""
     
-    OVERVIEW:
+    README:
 
-    This program is a daemon for inspecting vaccine provider websites, 
-    looking for confirmation of lack of phrases indicating availability.
-    The result is written to a 'status.json' file in the directory 
-    specified by --output-dir.  Archives of the 'status.json' and the HTML
-    content of the website changes are archived to the '[output-dir]/archive'
-    directory.
-    
-    If the argument --alert-rate is passed, this program expects a 
-    valid 'credentials.json' file in the directory
-    specified by --input-dir.  This file should contain the authentication
-    credentials for an SMTP server and login and email recipients
-    for status messages to be sent to.  Example 'credentials.json' file:
-       {
-       "email" : "foo@gmail.com",
-       "password" : "bar",
-       "recipients" : "foobar@tmomail.net, myname@yahoo.com",
-       "smtp_host" : "smtp.myserver.com",
-       "smtp_port" : 465
-       }
-    
+    This program is a daemon for inspecting vaccine provider websites.
+
     This program always expects a valid 'websites.json' file in the directory
     specified by --input-dir.  This file defines the websites to query, along with 
     the positive/negative phrases to search for.  Example 'websites.json' file:
 
-        "UT Health San Antonio" : {
+    {
+        "UT Health San Antonio": {
+            "type" : "phrase",
             "website": "https://schedule.utmedicinesa.com/Identity/Account/Register",
             "neg_phrase": "are full",
             "pos_phrase": "you confirm your understanding"
         },
-        "Test Site" : {
-            "website": "http://mytestsite.com/mydirectory",
-            "neg_phrase": "no",
-            "pos_phrase": "yes",
+        "San Antonio CVS" : {
+            "type" : "cvs",
+            "website" : "https://www.cvs.com/immunizations/covid-19-vaccine",
+            "state" : "TX",
+            "city" : "San Antonio"
+        },
+        "San Antonio Walgreens" : {
+            "type" : "walgreens",
+            "website" : "https://www.walgreens.com/findcare/vaccination/covid-19/location-screening",
+            "query" : "San Antonio, TX"
         }
-
-
-    Any site defined in `websites.json` with special keywords is handled in a custom way.  
-    These keywords include:
-    * Any site with "CVS" in the name will use the "state" and "city" keys for lookup on the cvs.com website.
-    * Any site with "Walgreens" in the name will use the "query" key for lookup on the walgreens.com website.
-    * Any site with "HEB" in the name will use the "city" key for lookup on the heb.com website.
+    }
+    
+    If the argument --notification-rate is passed, this program expects a 
+    valid 'credentials.json' file specified by the --credentials argument.
+    This file should contain the authentication credentials for an SMTP server 
+    and login and email recipients for status messages to be sent to.  Example 
+    'credentials.json' file:
+    
+    {
+      "email" : "foo@gmail.com",
+      "password" : "bar",
+      "recipients" : "foobar@tmomail.net, myname@yahoo.com",
+      "smtp_host" : "smtp.myserver.com",
+      "smtp_port" : 465
+     }
+    
 
     EXAMPLE USE (Command Line):
 
-        # run the daemon with a request rate of 5 minutes (300 seconds), outputting
-        # status to the 'status' directory
-        ./vaccineChecker.py --input-dir input --output-dir status --request-rate 300
+        See 'vaccineChecker.py --help' for full argument set.
 
-        # run the daemon with a request rate of 30 seconds, output status to
-        # the 'out' directory, and send an email heartbeat and erros to the 'recipients'
-        # in 'credentials.json' every 60 minutes.
-        ./vaccineChecker.py --input-dir input --output-dir out --request-rate 30 --alert-rate 60
+        # run the daemon with a request rate of 5 minutes (300 seconds), outputting
+        # status to the default 'status' directory
+        ./vaccineChecker.py --websites input/websites.json --request-rate 300
+
+        # run the daemon with a request rate of 10 minutes (600 seconds), outputting
+        # status to the 'output' directory, sending a periodic update of status to 
+        # the email supplied in 'credentials.json'
+        ./vaccineChecker.py --websites input/websites.json --request-rate 500 --output-dir output --credentials input/credentials.json
 
     REQUIREMENTS:
 
