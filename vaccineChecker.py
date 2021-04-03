@@ -415,12 +415,16 @@ class vaccineChecker(object):
 
         self.DEBUG("INFO: Received response, parsing information from HEB...")
         city = site['city'].upper()
-        self.handle_status(Availability.PROBABLY_NOT, name, "")
         try:
+            foundOne = False
             for location in d['locations']:
                 if location["city"].upper() == city and location["openTimeslots"] != 0:
                     self.DEBUG("INFO: Found a match at HEB for '%s'! Zip code: '%s'. Open timeslots: %d" % (city, location['zip'], location['openTimeslots']))
                     self.handle_status(Availability.MAYBE, name, "")
+                    foundOne = True
+            
+            if not foundOne:
+                self.handle_status(Availability.PROBABLY_NOT, name, "")
 
         except KeyError as e:
             self.handle_status(Availability.PROBABLY_NOT, name, "")
