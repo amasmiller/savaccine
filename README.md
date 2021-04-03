@@ -37,7 +37,10 @@ The setup is not a one-click-easy-button, but it's not too complicated:
   index.php
   vaccineChecker.py
   input/
+    README.md
     websites.json
+  status/
+    README.md
 ```  
 ### Step 2
 * in the extracted directory:
