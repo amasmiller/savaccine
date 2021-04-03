@@ -219,7 +219,7 @@ I may not know about provider [X].  Email me at <a href="mailto:amasmiller.com">
 <br>
 <b>Is this available in other cities?</b>
 <br>
-Don't know.  This was homegrown for San Antonio, like an HEB tortilla.  The source code is available at <a href="https://github.com/amasmiller/savaccine/">this site</a>.
+Don't know.  This was homegrown for San Antonio, like an HEB tortilla.  The source code is an open source project available at <a href="https://github.com/amasmiller/savaccine/">this site</a>.
 <br>
 <br>
 <b>Doesn't this spam the provider servers?</b>
