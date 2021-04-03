@@ -20,7 +20,7 @@ An example file `input/websites.json` is provided in this source tree.  The site
 
 The setup is not a one-click-easy-button, but it's not too complicated:
 
-You'll need to:
+### Prerequisites
 * have a Linux server with:
     * PHP (v5.5 known to work) 
     * Python (v3.4.3 known to work)
