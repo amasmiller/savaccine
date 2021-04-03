@@ -18,6 +18,7 @@ import json
 import re
 import urllib3
 from datetime import datetime
+from datetime import timedelta
 from email.mime.text import MIMEText
 
 # non-standard libraries
@@ -501,7 +502,7 @@ class vaccineChecker(object):
                 # give the good servers some time to rest
                 VARIANCE = 10 # seconds
                 sleeptime = random.randint(max(self.MIN_REQUEST_RATE, self.m_requestRate - VARIANCE), self.m_requestRate + VARIANCE)
-                self.DEBUG("INFO: checking again in %d seconds..." % (sleeptime))
+                self.DEBUG("INFO: checking again in %d seconds (%s)..." % (sleeptime, timedelta(seconds=sleeptime)))
                 time.sleep(sleeptime)
 
                 schedule.run_pending()
