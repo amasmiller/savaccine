@@ -74,6 +74,9 @@ PROGRAM_DESCRIPTION="""
         This script was developed with Python 3.4.3 and the packages as specified
         by the import directives.
 
+        If the 'walgreens' type in 'websites.json' is specified, the 'selenium' Python package
+        and the 'geckodriver' OS package is needed.
+
     """
 
 
