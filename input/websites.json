@@ -31,7 +31,7 @@
     },
     "San Antonio Walgreens" : {
         "type" : "walgreens",
-        "website" : "https://www.walgreens.com/findcare/vaccination/covid-19/location-screening",
+        "website" : "https://www.walgreens.com/topic/promotion/covid-vaccine.jsp",
         "query" : "San Antonio, TX"
     },
     "San Antonio HEB" : {
