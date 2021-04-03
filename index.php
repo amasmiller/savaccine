@@ -182,7 +182,7 @@ $now = new DateTime("now", new DateTimeZone('America/Chicago'));
 print_n("Last page refresh: ".$now->format('d-M-Y h:i:s A'));  
 print_n("<br><br>");
 
-print_n("This page refreshes every ".($DEBUG_FAST ? "second" : "$REFRESH_RATE minutes" . " or by clicking <a href=\"\">here</a>.")); 
+print_n("This page refreshes every ".($DEBUG_FAST ? "second" : "$REFRESH_RATE minutes" . " or by clicking <a href=\"\">here</a>.  Appointments go fast.")); 
 
 print_n("</center>");
 
@@ -228,7 +228,7 @@ Even if 1 million people refresh this site every second, the providers servers s
 <br>
 <b>Is this different than vaccinespotter.org?</b>
 <br>
-Similar concept, but simpler and just for San Antonio. Not affiliated with <a href="http://vaccinespotter.org">vaccinespotter.org</a>.
+Similar concept, but includes local providers that vaccinespotter.org does not (UT Health Science Center, SA Metro, and University Health). Not affiliated with <a href="http://vaccinespotter.org">vaccinespotter.org</a>.
 <br>
 <br>
 <b>Who made this?</b>
