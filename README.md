@@ -25,7 +25,7 @@ The setup is not a one-click-easy-button, but it's not too complicated:
     * PHP (v5.5 known to work) 
     * Python (v3.4.3 known to work)
     * Python dependencies in the `import`s of `vaccineChecker.py` (a.k.a. `pip install....`)
-    * if querying Walgreens, you need the `selenium` Python package and the Linux Firefox `geckodriver`driver for the OS.  The script assumes the `geckodriver` binary is in the path. See https://askubuntu.com/questions/851401/where-to-find-geckodriver-needed-by-selenium-python-package for setup.
+    * if you include `walgreens` as a type in `websites.json`, you need the `selenium` Python package and the Linux Firefox `geckodriver`driver for the OS.  The script assumes the `geckodriver` binary is in the path. See https://askubuntu.com/questions/851401/where-to-find-geckodriver-needed-by-selenium-python-package for setup.  If you are not including `walgreens` as a type, you don't need this.
 
 ### Step 1
 * download and extract a copy of this repository to a location NOT served by the web server.  example:
