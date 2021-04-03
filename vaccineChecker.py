@@ -148,12 +148,11 @@ class vaccineChecker(object):
         if (0 != self.m_notificationRate):
             self.read_credentials()
             self.DEBUG("INFO: --notification-rate passed, configuring to send heartbeat message every %d minutes" % (self.m_notificationRate))
+            self.heartbeat()
             schedule.every(self.m_notificationRate).minutes.do(self.heartbeat)
         else:
             self.DEBUG("INFO: --notification-rate not passed, no notifications will be sent.")
 
-        self.send_message("INFO: Startup. m_attempts = %d." % (self.m_attempts))
-        
         self.read_websites()
 
         # check for selenium
@@ -181,7 +180,7 @@ class vaccineChecker(object):
     def DEBUG(self, x):
         if (self.m_verbose):
             frame,filename,line_number,function_name,lines,index = inspect.stack()[1] 
-            logLine = "[%s][%s|%s|%s|%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), filename, function_name, line_number, x)
+            logLine = "[%s][%s|%s|%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), function_name, line_number, x)
         else:
             logLine = "[%s] %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), x)
 
@@ -276,12 +275,12 @@ class vaccineChecker(object):
 
         if (self.m_verbose):
             frame,filename,line_number,function_name,lines,index = inspect.stack()[1] 
-            m = "[%s]\n\n[%s|%s|%s|%s]\n\n %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), filename, function_name, line_number, s)
+            m = "[%s]\n\n[%s|%s|%s]\n\n %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), function_name, line_number, s)
         else:
             m = "[%s]\n\n %s" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), s)
 
         msg = MIMEText(m)
-        msg['Subject'] = os.path.basename(__file__)
+        msg['Subject'] = os.path.basename(__file__) # script name
         msg['From'] = self.EMAIL
         msg['To'] = (', ').join(self.RECIPIENTS.split(','))
 
