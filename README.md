@@ -6,7 +6,7 @@ This project is used to show availablity of the COVID-19 vaccine in San Antonio,
 
 ## How does it work?
 
-Vaccine provider websites in a configuration file are periodically queried by a Python script to look for current availability.  The status is written to a file, when is then ready by a PHP file for display on a website.
+Vaccine provider websites in a configuration file are periodically queried by a Python script to look for current availability.  The status is written to a file, which is then ready by a PHP file for display on a website.
 
 `index.php` is the website, `vaccineChecker.py` is the background task for querying the websites.  See respective README information at the top `index.php` / `vaccineChecker.py`, along with `vaccineChecker.py --help`.
 
