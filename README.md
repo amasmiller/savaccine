@@ -44,7 +44,7 @@ The setup is not a one-click-easy-button, but it's not too complicated:
 ```  
 ### Step 2
 * in the extracted directory:
-  * if you would like notifications to an email with script status to be sent, as enabled by the `--notification-rate` argument, create your own `credentials.json` file and pass it to the script with `--credentials`. See README in `vaccineChecker.py` for format.
+  * if you would like notifications to an email with script status to be sent, as enabled by the `--notification-rate` argument, create your own `credentials.json` file and pass it to the script with `--credentials`. See README in `vaccineChecker.py` for format.  This is optional.
   * modify `input/websites.json` for the websites you wish to monitor
   * run `vaccineChecker.py` as a background task
 
