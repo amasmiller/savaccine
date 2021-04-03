@@ -51,7 +51,7 @@ REQUIREMENTS:
 
 #button 
 {
-    font-family: 'Verdana';
+    font-family: Calibri, sans-serif;
     border: 0.2em solid; 
     border-radius: 2em; 
     padding: 20px 20px 20px 20px;
@@ -60,8 +60,9 @@ REQUIREMENTS:
 
 body 
 { 
+    background-color:  #D6ECf3;
     margin: 1em;
-    font-family: 'Verdana';
+    font-family: Calibri, sans-serif;
 }
 
 @media only screen and (orientation: portrait)
@@ -146,13 +147,13 @@ foreach ($items as $name => $info)
     switch ($info['status'])
     {
         case "probably":
-            $style .= "background-color: lightgreen";
+            $style .= "background-color: #82CA9D";
             break;
         case "probably not":
-            $style .= "background-color: lightcoral";
+            $style .= "background-color: #F7977A";
             break;
         case "maybe":
-            $style .= "background-color: khaki";
+            $style .= "background-color: #FFF79A";
             break;
         default;
             $style .= "background-color: gray";
@@ -172,7 +173,7 @@ foreach ($items as $name => $info)
 }
 
 $text = "I'm not sure I trust this site.<br><br>Open all of them.";
-print_n("<button style=\"background-color: lightgray\" id=\"button\" onclick=\"$allurls\">");
+print_n("<button style=\"background-color: #F9F1F0\" id=\"button\" onclick=\"$allurls\">");
 print_n("<span>$text</span>");
 print_n("</button>");
 
@@ -180,9 +181,9 @@ print_n("<br>");
 print_n("<br>");
 $now = new DateTime("now", new DateTimeZone('America/Chicago'));
 print_n("Last page refresh: ".$now->format('d-M-Y h:i:s A'));  
-print_n("<br><br>");
+print_n("<br>");
 
-print_n("This page refreshes every ".($DEBUG_FAST ? "second" : "$REFRESH_RATE minutes" . " or by clicking <a href=\"\">here</a>.  Appointments go fast.")); 
+print_n("This page refreshes every ".($DEBUG_FAST ? "second" : "$REFRESH_RATE minutes" . " or by clicking <a href=\"\">here</a>.")); 
 
 print_n("</center>");
 
