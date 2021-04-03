@@ -278,9 +278,9 @@ class vaccineChecker(object):
 
         if (self.m_verbose):
             frame,filename,line_number,function_name,lines,index = inspect.stack()[1] 
-            m = "[%s]\n\n[%s|%s|%s]\n\n %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), function_name, line_number, s)
+            m = "[%s]\n[%s|%s|%s]\n%s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), os.getpid(), function_name, line_number, s)
         else:
-            m = "[%s]\n\n %s" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), s)
+            m = "[%s]\n%s" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), s)
 
         msg = MIMEText(m)
         msg['Subject'] = os.path.basename(__file__) # script name
