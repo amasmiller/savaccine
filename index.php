@@ -34,6 +34,22 @@ REQUIREMENTS:
     This script was developed with PHP v5.5.9.
 */
 
+use \Datetime;
+
+// utility function so HTML looks nice
+function print_n($s) { echo $s."\n"; }
+
+// if needed, comment in
+//error_reporting(-1);
+//ini_set('display_errors', 'On');
+
+// for developers
+if (isset($_GET["debug_raw"])) { $DEBUG_RAW = True; }
+else { $DEBUG_RAW = False; }
+if (isset($_GET["debug_test"])) { $DEBUG_TEST = True; }
+else { $DEBUG_TEST = False; }
+
+
 ?>
 
 <html>
@@ -101,6 +117,13 @@ body
 
     // periodically update color and update time based on most current status.json
     function update(data) {
+
+        // debug if enabled
+        if (<?php echo json_encode($DEBUG_RAW); ?>)
+        {
+            $("#raw-json").html("<pre>" +JSON.stringify(data, null, 4) + "</pre>");
+        }
+
         for (var name in data)
         {
             site = data[name];
@@ -139,20 +162,6 @@ body
     });
 </script>
 <?php
-use \Datetime;
-
-// utility function so HTML looks nice
-function print_n($s) { echo $s."\n"; }
-
-// if needed, comment in
-//error_reporting(-1);
-//ini_set('display_errors', 'On');
-
-// for developers
-if (isset($_GET["debug_raw"])) { $DEBUG_RAW = True; }
-else { $DEBUG_RAW = False; }
-if (isset($_GET["debug_test"])) { $DEBUG_TEST = True; }
-else { $DEBUG_TEST = False; }
 
 // what's my name again?
 $SITE_TITLE = "San Antonio COVID-19 Vaccine Availability";
@@ -209,12 +218,7 @@ print_n("Data refreshes every $REFRESH_RATE minutes.");
 
 print_n("</center>");
 
-if ($DEBUG_RAW)
-{
-    print_n("<pre style=\"text-align:left;\">");
-    print_n(file_get_contents($STATUS_JSON, true));
-    print_n("</pre>");
-}
+if ($DEBUG_RAW) { print_n("<div id=\"raw-json\"></div>"); }
 
 ?>
 <br>
