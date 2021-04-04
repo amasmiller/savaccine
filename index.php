@@ -151,8 +151,6 @@ function print_n($s) { echo $s."\n"; }
 // for developers
 if (isset($_GET["debug_raw"])) { $DEBUG_RAW = True; }
 else { $DEBUG_RAW = False; }
-if (isset($_GET["debug_fast"])) { $DEBUG_FAST = True; }
-else { $DEBUG_FAST = False; }
 if (isset($_GET["debug_test"])) { $DEBUG_TEST = True; }
 else { $DEBUG_TEST = False; }
 
@@ -207,7 +205,7 @@ $now = new DateTime("now", new DateTimeZone('America/Chicago'));
 print_n("<div id=\"last-refresh\"></div>");
 print_n("<br>");
 
-print_n("Data refreshes every ".($DEBUG_FAST ? "second" : "$REFRESH_RATE minutes."));
+print_n("Data refreshes every $REFRESH_RATE minutes.");
 
 print_n("</center>");
 
