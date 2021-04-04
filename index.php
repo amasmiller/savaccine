@@ -49,7 +49,7 @@ REQUIREMENTS:
 
 <style>
 
-#button 
+.button 
 {
     font-family: Calibri, sans-serif;
     border: 0.2em solid; 
@@ -67,7 +67,7 @@ body
 
 @media only screen and (orientation: portrait)
 {
-    #button 
+    .button 
     {
         font-size: 30px;
         width: 95%;
@@ -82,7 +82,7 @@ body
 
 @media only screen and (orientation: landscape)
 {
-    #button 
+    .button 
     {
         font-size: 20px;
         width: 45%;
@@ -96,6 +96,48 @@ body
 }
 
 </style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script>
+
+    // periodically update color and update time based on most current status.json
+    function update(data) {
+        for (var name in data)
+        {
+            site = data[name];
+            text = "<b>" + name + "</b><br>slots " + site.status + " available<br>" +
+                ((("update_time" in site) && ("" != site.update_time)) ? ("as of " + site.update_time) : "<br>");
+            id = name.replace(new RegExp(" ", "g"), "-");
+            $("#".concat(id)).html(text);
+            switch (site.status) 
+            {
+                case "probably": 
+                    $("#".concat(id)).css("background-color", "#82CA9D");
+                    break;
+                case "maybe": 
+                    $("#".concat(id)).css("background-color", "#FFF79A");
+                    break;
+                case "probably not": 
+                    $("#".concat(id)).css("background-color", "#F7977A");
+                    break;
+                default:
+                    $("#".concat(id)).css("background-color", "gray");
+                    break;
+            }
+        }
+
+        var time = new Date();
+        t = time.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second : 'numeric', hour12: true });
+        $("#last-refresh").text(t);
+    }
+
+    // setup the polling
+    var status_file = "status.json";
+    setInterval(function() { $.getJSON(status_file, function(data) { update(data); }).fail(function(jqXHR) { console.log(jqXHR.status); })}, 1000);
+    $(document).ready(function() { 
+        $.ajaxSetup({ cache: false }); 
+        $.getJSON(status_file, function(data) { update(data); });
+    });
+</script>
 <?php
 use \Datetime;
 
@@ -119,7 +161,6 @@ $SITE_TITLE = "San Antonio COVID-19 Vaccine Availability";
 print_n("<title>$SITE_TITLE</title>");
 
 $REFRESH_RATE = 5; // minutes
-print_n("<meta http-equiv=\"refresh\" content=\"".(($DEBUG_FAST) ? "1" : strval($REFRESH_RATE*60))."\">");
 
 // read the output of vaccine-checker.py
 $STATUS_JSON = "status.json";
@@ -135,55 +176,38 @@ print_n("<b>$SITE_TITLE</b>");
 print_n("<br>");
 print_n("<a href=http://sanantoniovaccine.com>sanantoniovaccine.com</a>");
 print_n("<br><br>");
+
+// print out each button
 $allurls = "";
 foreach ($items as $name => $info)
 {
     if ($name == "Test Site" && !$DEBUG_TEST) { continue; }
-
-    $text = "<b>$name</b><br>slots " . $info['status'] . " available<br>";
-    $text .= (array_key_exists('update_time', $info) && $info['update_time'] != "") ? ("as of " . $info['update_time']) : "<br>";
-
-    $style = "";
-    switch ($info['status'])
-    {
-        case "probably":
-            $style .= "background-color: #82CA9D";
-            break;
-        case "probably not":
-            $style .= "background-color: #F7977A";
-            break;
-        case "maybe":
-            $style .= "background-color: #FFF79A";
-            break;
-        default;
-            $style .= "background-color: gray";
-            break;
-    }
 
     // special case
     $website = "";
     if (array_key_exists('display_website', $info)) { $website = $info['display_website']; } 
     else { $website = $info['website']; }
 
-    print_n("<button style=\"$style\" id=\"button\" onclick=\"window.open('".$website."', '_blank');\"/>");
-    print_n("<span>$text</span>");
-    print_n("</button>");
+    // text is filled in by javascript
+    $id = str_replace(" ", "-", $name); // ids cannot have spaces
+    print_n("<button id=\"$id\" style=\"$style\" class=\"button\" onclick=\"window.open('".$website."', '_blank');\"/></button>");
 
+    // for bottom button
     $allurls .= "window.open('".$website."', '_blank');";
 }
 
 $text = "I'm not sure I trust this site.<br><br>Open all of them.";
-print_n("<button style=\"background-color: #F9F1F0\" id=\"button\" onclick=\"$allurls\">");
-print_n("<span>$text</span>");
+print_n("<button style=\"background-color: #F9F1F0\" class=\"button\" onclick=\"$allurls\">");
+print_n("$text");
 print_n("</button>");
 
 print_n("<br>");
 print_n("<br>");
 $now = new DateTime("now", new DateTimeZone('America/Chicago'));
-print_n("Last page refresh: ".$now->format('d-M-Y h:i:s A'));  
+print_n("<div id=\"last-refresh\"></div>");
 print_n("<br>");
 
-print_n("This page refreshes every ".($DEBUG_FAST ? "second" : "$REFRESH_RATE minutes" . " or by clicking <a href=\"\">here</a>.")); 
+print_n("Data refreshes every ".($DEBUG_FAST ? "second" : "$REFRESH_RATE minutes."));
 
 print_n("</center>");
 
