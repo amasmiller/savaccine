@@ -163,20 +163,26 @@ class vaccineChecker(object):
         for name, info in self.m_websites.items():
             site = self.m_websites[name]
             
-            # currently only Walgreens requires 
+            # currently only Walgreens requires selenium
             if "walgreens" == site['type'].lower():
                 self.DEBUG("INFO: Setting up Python package 'selenium' for queries requiring user navigation (i.e  Walgreens)...")
+                self.selenium_setup()
 
-                from selenium import webdriver
-                options = webdriver.firefox.options.Options()
-                options.headless = True
-                self.DEBUG("INFO: Creating selenium object...")
 
-                # assumes 'geckodriver' binary is in path
-                self.m_sd = webdriver.Firefox(options=options)
-                self.m_sd.set_page_load_timeout(30)
-                self.DEBUG("INFO: Done setting up selenium.")
+    '''
+    Utility function for setting up selenium (needed for navigation on websites).
+    '''
+    def selenium_setup(self):
 
+        from selenium import webdriver
+        options = webdriver.firefox.options.Options()
+        options.headless = True
+        self.DEBUG("INFO: Creating selenium object...")
+
+        # assumes 'geckodriver' binary is in path
+        self.m_sd = webdriver.Firefox(options=options)
+        self.m_sd.set_page_load_timeout(30)
+        self.DEBUG("INFO: Done setting up selenium.")
 
     '''
     Utility function for logging.  Send to standard out and syslog.
@@ -440,9 +446,8 @@ class vaccineChecker(object):
         while self.m_attempts < self.MAX_ATTEMPTS or self.MAX_ATTEMPTS == 0:
 
             for name, info in self.m_websites.items():
+                site = self.m_websites[name]
                 try:
-                    site = self.m_websites[name]
-
                     # special cases that require website navigation
                     if ("walgreens" == site['type'].lower()):
                         self.query_walgreens(name)
@@ -473,8 +478,15 @@ class vaccineChecker(object):
                         self.DEBUG("WARNING: Timeout: " + str(e) + "...continuing")
                         continue
                     else:
+
                         self.DEBUG(traceback.format_exc())
                         self.DEBUG(("ERROR: Error when querying '%s'. Error type %s : %s" % (name, type(e).__name__, str(e))))
+
+                        # currently only Walgreens requires selenium
+                        if (site['type'].lower() == "walgreens"):
+                            self.DEBUG("INFO: Resetting selenium...");
+                            self.selenium_setup() 
+
                         continue
 
                     self.handle_status(Availability.PROBABLY_NOT, name, "")
