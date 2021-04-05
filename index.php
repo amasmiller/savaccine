@@ -65,6 +65,66 @@ else { $DEBUG_TEST = False; }
 
 <style>
 
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  height: 68;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 52px;
+  width: 52px;
+  left: 8px;
+  bottom: 8px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(52px);
+  -ms-transform: translateX(52px);
+  transform: translateX(52px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 68px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
 .button 
 {
     font-family: Calibri, sans-serif;
@@ -74,11 +134,13 @@ else { $DEBUG_TEST = False; }
     margin: 8px 1px 8px 1px;
 }
 
-body 
+
+body
 { 
     background-color:  #D6ECf3;
     margin: 1em;
     font-family: Calibri, sans-serif;
+    padding:0;
 }
 
 @media only screen and (orientation: portrait)
@@ -90,8 +152,12 @@ body
         margin: 4px 1px 4px 1px;
     }
 
-    body 
+    body
     { 
+        font-size: 30px;
+    }
+
+    table {
         font-size: 30px;
     }
 }
@@ -109,11 +175,20 @@ body
         font-size: 20px;
     }
 
+    table {
+        font-size: 30px;
+    }
+
 }
 
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
+
+    function soundHandler() {
+        var audio = new Audio('https://www.fesliyanstudios.com/play-mp3/6630');
+        audio.play();
+    }
 
     // periodically update color and update time based on most current status.json
     function update(data) {
@@ -151,11 +226,12 @@ body
         var time = new Date();
         t = time.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second : 'numeric', hour12: true });
         $("#last-refresh").text(t);
+
     }
 
     // setup the polling
     var status_file = "status.json";
-    setInterval(function() { $.getJSON(status_file, function(data) { update(data); }).fail(function(jqXHR) { console.log(jqXHR.status); })}, 1000);
+    setInterval(function() { $.getJSON(status_file, function(data) { update(data); }).fail(function(jqXHR) { console.log(jqXHR.status); })}, 6000);
     $(document).ready(function() { 
         $.ajaxSetup({ cache: false }); 
         $.getJSON(status_file, function(data) { update(data); });
@@ -168,6 +244,8 @@ $SITE_TITLE = "San Antonio COVID-19 Vaccine Availability";
 print_n("<title>$SITE_TITLE</title>");
 
 $REFRESH_RATE = 5; // minutes
+
+//print_n("<meta http-equiv=\"refresh\" content=\"2\">");
 
 // read the output of vaccine-checker.py
 $STATUS_JSON = "status.json";
@@ -209,12 +287,26 @@ print_n("$text");
 print_n("</button>");
 
 print_n("<br>");
-print_n("<br>");
-$now = new DateTime("now", new DateTimeZone('America/Chicago'));
-print_n("<div id=\"last-refresh\"></div>");
-print_n("<br>");
+?>
+<table width=100%>
+<tr>
+<td align="center">
+<label class="switch">
+  <input id="sound" onchange="soundHandler()" type="checkbox" checked>
+  <span class="slider round"></span>
+</label>
+<div>sound alert</div>
+</td>
+<td align="center">
+<div id="last-refresh"></div>
+</td>
+</tr>
+</table>
 
+<?php
+print_n("<br>");
 print_n("Data refreshes every $REFRESH_RATE minutes.");
+print_n("<br>");
 
 print_n("</center>");
 
