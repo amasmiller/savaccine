@@ -123,7 +123,7 @@ input:checked + .slider:before {
     font-family: Calibri, sans-serif;
     border: 0.2em solid; 
     border-radius: 2em; 
-    padding: 20px 20px 20px 20px;
+    padding: 18px 18px 18px 18px;
     margin: 8px 1px 8px 1px;
 }
 body
@@ -160,17 +160,17 @@ body
 {
     .button 
     {
-        font-size: 20px;
+        font-size: 18px;
         width: 45%;
     }
 
     body 
     { 
-        font-size: 20px;
+        font-size: 18px;
     }
 
     table {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     /* override slider/switch sizes */
@@ -210,7 +210,7 @@ body
         soundAlertEnabled = $("#sound").is(':checked');
         if (!lastSoundAlertEnabled && soundAlertEnabled)
         {
-            alert("When a site shows possible slots, you will hear a sheep.  Like this:");
+            alert("When a site shows possible slots, you will hear a sheep.  Like you'll hear when you press OK.");
             audio.play();
         }
         lastSoundAlertEnabled = soundAlertEnabled;
