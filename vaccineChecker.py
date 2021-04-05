@@ -315,7 +315,7 @@ class vaccineChecker(object):
 
         site = self.m_websites[name]
         if status.value != site['status']:
-            self.send_message("INFO: %s changed to %s" % (site['website'], status))
+            self.send_message("INFO: %s (%s) changed to %s" % (name, site['website'], status))
 
             # save off HTML if passed 
             if "" != html and self.m_enableArchive:
