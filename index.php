@@ -65,19 +65,18 @@ else { $DEBUG_TEST = False; }
 
 <style>
 
+/* slider/switch CSS courtesy of https://www.w3schools.com/howto/howto_css_switch.asp */
 .switch {
   position: relative;
   display: inline-block;
   width: 120px;
   height: 68px;
 }
-
 .switch input { 
   opacity: 0;
   width: 0;
   height: 0;
 }
-
 .slider {
   position: absolute;
   cursor: pointer;
@@ -89,7 +88,6 @@ else { $DEBUG_TEST = False; }
   -webkit-transition: .4s;
   transition: .4s;
 }
-
 .slider:before {
   position: absolute;
   content: "";
@@ -101,30 +99,25 @@ else { $DEBUG_TEST = False; }
   -webkit-transition: .4s;
   transition: .4s;
 }
-
 input:checked + .slider {
   background-color: #2196F3;
 }
-
 input:focus + .slider {
   box-shadow: 0 0 1px #2196F3;
 }
-
 input:checked + .slider:before {
   -webkit-transform: translateX(52px);
   -ms-transform: translateX(52px);
   transform: translateX(52px);
 }
-
-/* Rounded sliders */
 .slider.round {
   border-radius: 68px;
 }
-
 .slider.round:before {
   border-radius: 50%;
 }
 
+/* custom CSS */
 .button 
 {
     font-family: Calibri, sans-serif;
@@ -133,8 +126,6 @@ input:checked + .slider:before {
     padding: 20px 20px 20px 20px;
     margin: 8px 1px 8px 1px;
 }
-
-
 body
 { 
     background-color:  #D6ECf3;
@@ -182,6 +173,7 @@ body
         font-size: 20px;
     }
 
+    /* override slider/switch sizes */
     .switch {
       width: 60px;
       height: 34px;
@@ -308,6 +300,7 @@ print_n("<br><br>");
 $allurls = "";
 foreach ($items as $name => $info)
 {
+    // TODO handle in javascript.  maybe make hidden here?
     if ($name == "Test Site" && !$DEBUG_TEST) { continue; }
 
     // special case
