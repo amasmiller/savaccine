@@ -210,7 +210,7 @@ body
         soundAlertEnabled = $("#sound").is(':checked');
         if (!lastSoundAlertEnabled && soundAlertEnabled)
         {
-            alert("When a site shows possible slots, you will hear a sheep.  Like you'll hear when you press OK.");
+            alert("When site availability changes, if your device is on this page, you will hear a sheep.  Like the one you're about to hear.");
             audio.play();
         }
         lastSoundAlertEnabled = soundAlertEnabled;
