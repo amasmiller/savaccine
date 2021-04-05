@@ -340,6 +340,11 @@ print_n("<br><br>");
 <div>sound alert</div>
 </td>
 <td align="center">
+<?php
+print_n("Data refreshes every $REFRESH_RATE minutes.");
+?>
+</td>
+<td align="center">
 <div id="last-refresh"></div>
 </td>
 </tr>
@@ -347,7 +352,6 @@ print_n("<br><br>");
 
 <?php
 print_n("<br>");
-print_n("Data refreshes every $REFRESH_RATE minutes.");
 print_n("<br>");
 
 print_n("</center>");
