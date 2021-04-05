@@ -59,24 +59,24 @@ PROGRAM_DESCRIPTION="""
 
     EXAMPLE USE (Command Line):
 
-        See 'vaccineChecker.py --help' for full argument set.
+    See 'vaccineChecker.py --help' for full argument set.
 
-        # run the daemon with a request rate of 5 minutes (300 seconds), outputting
-        # status to the default 'status' directory
-        ./vaccineChecker.py --websites input/websites.json --request-rate 300
+    # run the daemon with a request rate of 5 minutes (300 seconds), outputting
+    # status to the default 'status' directory
+    ./vaccineChecker.py --websites input/websites.json --request-rate 300
 
-        # run the daemon with a request rate of 10 minutes (600 seconds), outputting
-        # status to the 'output' directory, sending a periodic update of status to 
-        # the email supplied in 'credentials.json'
-        ./vaccineChecker.py --websites input/websites.json --request-rate 500 --output-dir output --credentials input/credentials.json
+    # run the daemon with a request rate of 10 minutes (600 seconds), outputting
+    # status to the 'output' directory, sending a periodic update of status to 
+    # the email supplied in 'credentials.json'
+    ./vaccineChecker.py --websites input/websites.json --request-rate 500 --output-dir output --credentials input/credentials.json
 
     REQUIREMENTS:
 
-        This script was developed with Python 3.4.3 and the packages as specified
-        by the import directives.
+    This script was developed with Python 3.4.3 and the packages as specified
+    by the import directives.
 
-        If the 'walgreens' type in 'websites.json' is specified, the 'selenium' Python package
-        and the 'geckodriver' OS package is needed.
+    If the 'walgreens' type in 'websites.json' is specified, the 'selenium' Python package
+    and the 'geckodriver' OS package is needed.
 
     """
 

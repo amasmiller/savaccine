@@ -69,7 +69,7 @@ else { $DEBUG_TEST = False; }
   position: relative;
   display: inline-block;
   width: 120px;
-  height: 68;
+  height: 68px;
 }
 
 .switch input { 
@@ -143,6 +143,7 @@ body
     padding:0;
 }
 
+/* phones */
 @media only screen and (orientation: portrait)
 {
     .button 
@@ -162,6 +163,8 @@ body
     }
 }
 
+
+/* iPads, monitors, etc.. anything but phones */
 @media only screen and (orientation: landscape)
 {
     .button 
@@ -176,7 +179,29 @@ body
     }
 
     table {
-        font-size: 30px;
+        font-size: 20px;
+    }
+
+    .switch {
+      width: 60px;
+      height: 34px;
+    }
+
+    .slider:before {
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+    }
+
+    input:checked + .slider:before {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+    }
+
+    .slider.round {
+      border-radius: 24px;
     }
 
 }
@@ -185,12 +210,22 @@ body
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
 
+    // handle the sound alert 
+    var audio = new Audio('https://www.fesliyanstudios.com/play-mp3/6630'); // sheep
+    var soundAlertEnabled = false;
+    var lastSoundAlertEnabled = false;
     function soundHandler() {
-        var audio = new Audio('https://www.fesliyanstudios.com/play-mp3/6630');
-        audio.play();
+        soundAlertEnabled = $("#sound").is(':checked');
+        if (!lastSoundAlertEnabled && soundAlertEnabled)
+        {
+            alert("When a site shows possible slots, you will hear a sheep.  Like this:");
+            audio.play();
+        }
+        lastSoundAlertEnabled = soundAlertEnabled;
     }
 
     // periodically update color and update time based on most current status.json
+    var lastSiteStatus = Object.create(null);
     function update(data) {
 
         // debug if enabled
@@ -199,6 +234,7 @@ body
             $("#raw-json").html("<pre>" +JSON.stringify(data, null, 4) + "</pre>");
         }
 
+        // update color and time
         for (var name in data)
         {
             site = data[name];
@@ -221,17 +257,25 @@ body
                     $("#".concat(id)).css("background-color", "gray");
                     break;
             }
+
+            // play sound if site transitions away from "probably not"
+            if ("probably not" != site.status && lastSiteStatus[name] != site.status && soundAlertEnabled)
+            {
+                audio.play();
+            }
+
+            lastSiteStatus[name] = site.status;
         }
 
+        // show current time
         var time = new Date();
         t = time.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second : 'numeric', hour12: true });
         $("#last-refresh").text(t);
-
     }
 
     // setup the polling
     var status_file = "status.json";
-    setInterval(function() { $.getJSON(status_file, function(data) { update(data); }).fail(function(jqXHR) { console.log(jqXHR.status); })}, 6000);
+    setInterval(function() { $.getJSON(status_file, function(data) { update(data); }).fail(function(jqXHR) { console.log(jqXHR.status); })}, 1000);
     $(document).ready(function() { 
         $.ajaxSetup({ cache: false }); 
         $.getJSON(status_file, function(data) { update(data); });
@@ -244,8 +288,6 @@ $SITE_TITLE = "San Antonio COVID-19 Vaccine Availability";
 print_n("<title>$SITE_TITLE</title>");
 
 $REFRESH_RATE = 5; // minutes
-
-//print_n("<meta http-equiv=\"refresh\" content=\"2\">");
 
 // read the output of vaccine-checker.py
 $STATUS_JSON = "status.json";
@@ -281,18 +323,18 @@ foreach ($items as $name => $info)
     $allurls .= "window.open('".$website."', '_blank');";
 }
 
-$text = "I'm not sure I trust this site.<br><br>Open all of them.";
+$text = "Open all of them.";
 print_n("<button style=\"background-color: #F9F1F0\" class=\"button\" onclick=\"$allurls\">");
 print_n("$text");
 print_n("</button>");
 
-print_n("<br>");
+print_n("<br><br>");
 ?>
 <table width=100%>
 <tr>
 <td align="center">
 <label class="switch">
-  <input id="sound" onchange="soundHandler()" type="checkbox" checked>
+  <input id="sound" onchange="soundHandler()" type="checkbox">
   <span class="slider round"></span>
 </label>
 <div>sound alert</div>
