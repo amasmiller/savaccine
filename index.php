@@ -160,7 +160,7 @@ body
 {
     .button 
     {
-        font-size: 18px;
+        font-size: 17px;
         width: 45%;
     }
 
@@ -203,14 +203,14 @@ body
 <script>
 
     // handle the sound alert 
-    var audio = new Audio('https://www.fesliyanstudios.com/play-mp3/6630'); // sheep
     var soundAlertEnabled = false;
     var lastSoundAlertEnabled = false;
+    var audio = new Audio('https://amasmiller.com/sheep.mp3');
     function soundHandler() {
         soundAlertEnabled = $("#sound").is(':checked');
         if (!lastSoundAlertEnabled && soundAlertEnabled)
         {
-            alert("When site availability changes, if your device is on this page, you will hear a sheep.  Like the one you're about to hear.");
+            alert("If you leave this window open and a site changes status, you will hear a sheep.  Like the one you're about to hear.");
             audio.play();
         }
         lastSoundAlertEnabled = soundAlertEnabled;
@@ -229,6 +229,11 @@ body
         // update color and time
         for (var name in data)
         {
+            if (name == "Test Site" && !<?php echo json_encode($DEBUG_TEST); ?>)
+            {
+                continue;
+            }
+
             site = data[name];
             text = "<b>" + name + "</b><br>slots " + site.status + " available<br>" +
                 ((("update_time" in site) && ("" != site.update_time)) ? ("as of " + site.update_time) : "<br>");
@@ -253,6 +258,7 @@ body
             // play sound if site transitions away from "probably not"
             if ("probably not" != site.status && lastSiteStatus[name] != site.status && soundAlertEnabled)
             {
+                $("#".concat(id)).css("background-color", "lightblue");
                 audio.play();
             }
 
@@ -300,7 +306,6 @@ print_n("<br><br>");
 $allurls = "";
 foreach ($items as $name => $info)
 {
-    // TODO handle in javascript.  maybe make hidden here?
     if ($name == "Test Site" && !$DEBUG_TEST) { continue; }
 
     // special case
