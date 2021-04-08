@@ -4,9 +4,8 @@
 OVERVIEW:
 
     This is the webpage that reads the `status.json` produced by 
-    `vaccine-checker.py`.
-
-    This file must be in the same directory as 'status.json' (or a symlink to it).
+    `vaccine-checker.py`.  It must be in the same directory as 
+    'status.json' (or a symlink to it).
 
     The webpage displays a list of boxes with fields populated by 'vaccineChecker.py'
     into a 'status.json' file.  This webpage cares about the 'status', 'website', and 'update_time'
@@ -29,6 +28,11 @@ OVERVIEW:
         }
 }
 
+    The "sound alert" button on the webpage is enabled by defining the 
+    SOUND_ALERT_FILE variable with the URL of an .mp3 to play upon a site
+    showing possible vaccination slots.  If the SOUND_ALERT_FILE
+    variable is an empty string, the button is not shown.
+
 REQUIREMENTS:
 
     This script was developed with PHP v5.5.9.
@@ -44,11 +48,13 @@ function print_n($s) { echo $s."\n"; }
 //ini_set('display_errors', 'On');
 
 // for developers
-if (isset($_GET["debug_raw"])) { $DEBUG_RAW = True; }
+if (isset($_GET["debug_raw"])) { $DEBUG_RAW = True; } // shows the .json on the webpage
 else { $DEBUG_RAW = False; }
-if (isset($_GET["debug_test"])) { $DEBUG_TEST = True; }
+if (isset($_GET["debug_test"])) { $DEBUG_TEST = True; } // shows the "Test Site" in websites.json on the page
 else { $DEBUG_TEST = False; }
 
+// set to empty string to disable 'sound alert' button
+$SOUND_ALERT_FILE = 'https://amasmiller.com/sheep.mp3';
 
 ?>
 
@@ -202,10 +208,11 @@ body
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
 
-    // handle the sound alert 
+<?php if ("" != $SOUND_ALERT_FILE) { ?>
+    // include sound alert logic if enabled
     var soundAlertEnabled = false;
     var lastSoundAlertEnabled = false;
-    var audio = new Audio('https://amasmiller.com/sheep.mp3');
+    var audio = new Audio(<?php echo json_encode($SOUND_ALERT_FILE); ?>);
     function soundHandler() {
         soundAlertEnabled = $("#sound").is(':checked');
         if (!lastSoundAlertEnabled && soundAlertEnabled)
@@ -215,6 +222,7 @@ body
         }
         lastSoundAlertEnabled = soundAlertEnabled;
     }
+<?php  } ?>
 
     // periodically update color and update time based on most current status.json
     var lastSiteStatus = Object.create(null);
@@ -255,12 +263,15 @@ body
                     break;
             }
 
-            // play sound if site transitions away from "probably not"
+<?php if ("" != $SOUND_ALERT_FILE) { ?>
+            // play sound if enabled and site transitions away from "probably not"
             if ("probably not" != site.status && lastSiteStatus[name] != site.status && soundAlertEnabled)
             {
                 $("#".concat(id)).css("background-color", "lightblue");
                 audio.play();
             }
+<?php  } ?>
+
 
             lastSiteStatus[name] = site.status;
         }
@@ -330,6 +341,7 @@ print_n("<br><br>");
 ?>
 <table width=100%>
 <tr>
+<?php if ("" != $SOUND_ALERT_FILE) { ?>
 <td align="center">
 <label class="switch">
   <input id="sound" onchange="soundHandler()" type="checkbox">
@@ -338,7 +350,11 @@ print_n("<br><br>");
 <div>sound alert</div>
 </td>
 <td align="center">
+<?php } else { ?>
+<td></td>
+<td>
 <?php
+}
 print_n("Data refreshes every $REFRESH_RATE minutes.");
 ?>
 </td>
