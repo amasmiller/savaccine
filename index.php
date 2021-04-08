@@ -65,22 +65,76 @@ else { $DEBUG_TEST = False; }
 
 <style>
 
+/* slider/switch CSS courtesy of https://www.w3schools.com/howto/howto_css_switch.asp */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  height: 68px;
+}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 52px;
+  width: 52px;
+  left: 8px;
+  bottom: 8px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: #2196F3;
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+input:checked + .slider:before {
+  -webkit-transform: translateX(52px);
+  -ms-transform: translateX(52px);
+  transform: translateX(52px);
+}
+.slider.round {
+  border-radius: 68px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* custom CSS */
 .button 
 {
     font-family: Calibri, sans-serif;
     border: 0.2em solid; 
     border-radius: 2em; 
-    padding: 20px 20px 20px 20px;
+    padding: 18px 18px 18px 18px;
     margin: 8px 1px 8px 1px;
 }
-
-body 
+body
 { 
     background-color:  #D6ECf3;
     margin: 1em;
     font-family: Calibri, sans-serif;
+    padding:0;
 }
 
+/* phones */
 @media only screen and (orientation: portrait)
 {
     .button 
@@ -90,23 +144,56 @@ body
         margin: 4px 1px 4px 1px;
     }
 
-    body 
+    body
     { 
+        font-size: 30px;
+    }
+
+    table {
         font-size: 30px;
     }
 }
 
+
+/* iPads, monitors, etc.. anything but phones */
 @media only screen and (orientation: landscape)
 {
     .button 
     {
-        font-size: 20px;
+        font-size: 17px;
         width: 45%;
     }
 
     body 
     { 
-        font-size: 20px;
+        font-size: 18px;
+    }
+
+    table {
+        font-size: 18px;
+    }
+
+    /* override slider/switch sizes */
+    .switch {
+      width: 60px;
+      height: 34px;
+    }
+
+    .slider:before {
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+    }
+
+    input:checked + .slider:before {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+    }
+
+    .slider.round {
+      border-radius: 24px;
     }
 
 }
@@ -115,7 +202,22 @@ body
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
 
+    // handle the sound alert 
+    var soundAlertEnabled = false;
+    var lastSoundAlertEnabled = false;
+    var audio = new Audio('https://amasmiller.com/sheep.mp3');
+    function soundHandler() {
+        soundAlertEnabled = $("#sound").is(':checked');
+        if (!lastSoundAlertEnabled && soundAlertEnabled)
+        {
+            alert("If you leave this window open and a site changes status, you will hear a sheep.  Like the one you're about to hear.");
+            audio.play();
+        }
+        lastSoundAlertEnabled = soundAlertEnabled;
+    }
+
     // periodically update color and update time based on most current status.json
+    var lastSiteStatus = Object.create(null);
     function update(data) {
 
         // debug if enabled
@@ -124,8 +226,14 @@ body
             $("#raw-json").html("<pre>" +JSON.stringify(data, null, 4) + "</pre>");
         }
 
+        // update color and time
         for (var name in data)
         {
+            if (name == "Test Site" && !<?php echo json_encode($DEBUG_TEST); ?>)
+            {
+                continue;
+            }
+
             site = data[name];
             text = "<b>" + name + "</b><br>slots " + site.status + " available<br>" +
                 ((("update_time" in site) && ("" != site.update_time)) ? ("as of " + site.update_time) : "<br>");
@@ -146,8 +254,18 @@ body
                     $("#".concat(id)).css("background-color", "gray");
                     break;
             }
+
+            // play sound if site transitions away from "probably not"
+            if ("probably not" != site.status && lastSiteStatus[name] != site.status && soundAlertEnabled)
+            {
+                $("#".concat(id)).css("background-color", "lightblue");
+                audio.play();
+            }
+
+            lastSiteStatus[name] = site.status;
         }
 
+        // show current time
         var time = new Date();
         t = time.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second : 'numeric', hour12: true });
         $("#last-refresh").text(t);
@@ -203,18 +321,36 @@ foreach ($items as $name => $info)
     $allurls .= "window.open('".$website."', '_blank');";
 }
 
-$text = "I'm not sure I trust this site.<br><br>Open all of them.";
+$text = "Open all of them.";
 print_n("<button style=\"background-color: #F9F1F0\" class=\"button\" onclick=\"$allurls\">");
 print_n("$text");
 print_n("</button>");
 
-print_n("<br>");
-print_n("<br>");
-$now = new DateTime("now", new DateTimeZone('America/Chicago'));
-print_n("<div id=\"last-refresh\"></div>");
-print_n("<br>");
-
+print_n("<br><br>");
+?>
+<table width=100%>
+<tr>
+<td align="center">
+<label class="switch">
+  <input id="sound" onchange="soundHandler()" type="checkbox">
+  <span class="slider round"></span>
+</label>
+<div>sound alert</div>
+</td>
+<td align="center">
+<?php
 print_n("Data refreshes every $REFRESH_RATE minutes.");
+?>
+</td>
+<td align="center">
+<div id="last-refresh"></div>
+</td>
+</tr>
+</table>
+
+<?php
+print_n("<br>");
+print_n("<br>");
 
 print_n("</center>");
 
